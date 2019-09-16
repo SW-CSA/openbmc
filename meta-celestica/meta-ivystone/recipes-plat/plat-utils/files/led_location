@@ -1,0 +1,143 @@
+#!/bin/bash
+#
+# Copyright 2018-present Celestica. All Rights Reserved.
+#
+# This program file is free software; you can redistribute it and/or modify it
+# under the terms of the GNU General Public License as published by the
+# Free Software Foundation; version 2 of the License.
+#
+# This program is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+# for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program in a file named COPYING; if not, write to the
+# Free Software Foundation, Inc.,
+# 51 Franklin Street, Fifth Floor,
+# Boston, MA 02110-1301 USA
+
+PATH=/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/bin
+
+
+led_status() {
+    ((val=$(i2cset -f -y 5 0x36 0x0 0x40;i2cget -f -y 5 0x36 | head -n 1)))
+    ((ret=$val&0x10))
+    if [ $ret -gt 0 ]; then
+       return 1 #off
+    else
+        ((ret=$val&0x2))
+        if [ $ret -eq 0 ]; then
+            ((ret=$val&0x4))
+            if [ $ret -eq 0 ]; then
+                return 0 #on
+            fi
+        else
+            return 2 #unknown
+        fi
+    fi
+}
+
+led_ctrl() {
+    if [ "$1" = "on" ]; then
+        i2cset -f -y 5 0x36 0x0 0xbc24 w
+        if [ $? -ne 0 ]; then
+            return 1
+        fi
+        i2cset -f -y 5 0x36 0x0 0x0140 w
+        if [ $? -ne 0 ]; then
+            return 1
+        fi
+        i2cset -f -y 5 0x36 0x0 0x0024 w
+        if [ $? -ne 0 ]; then
+            return 1
+        fi
+        return 0
+    elif [ "$1" = "off" ]; then
+        i2cset -f -y 5 0x36 0x0 0xbc24 w
+        if [ $? -ne 0 ]; then
+            return 1
+        fi
+        i2cset -f -y 5 0x36 0x0 0x1340 w
+        if [ $? -ne 0 ]; then
+            return 1
+        fi
+        i2cset -f -y 5 0x36 0x0 0x0024 w
+        if [ $? -ne 0 ]; then
+            return 1
+        fi
+        return 0
+    fi
+    return 1
+}
+
+if [ $# -ge 1 ]; then
+    if [ "$1" = "on" ]; then
+        led_ctrl on
+        ret=$?
+        if [ $ret -eq 0 ]; then
+            led_status
+            ret=$?
+            if [ $ret -eq 0 ]; then
+                echo "Operation done, location LED is ON"
+                logger "Operation done, location LED is ON"
+            else
+                echo "Operation done, location LED status is UNKNOWN"
+                logger "Operation done, location LED status is UNKNOWN"
+            fi
+        else
+            led_status
+            ret=$?
+            if [ $ret -eq 0 ]; then
+                echo "Operation failed, location LED is ON"
+                logger "Operation failed, location LED is ON"
+            elif [ $ret -eq 1 ]; then
+                echo "Operation failed, location LED is OFF"
+                logger "Operation failed, location LED is OFF"
+            else
+                echo "Operation failed, location LED status is UNKNOWN"
+                logger "Operation failed, location LED status is UNKNOWN"
+            fi
+        fi
+    elif [ "$1" = "off" ]; then
+        led_ctrl off
+        ret=$?
+        if [ $ret -eq 0 ]; then
+            led_status
+            ret=$?
+            if [ $ret -eq 1 ]; then
+                echo "Operation done, location LED is OFF"
+                logger "Operation done, location LED is OFF"
+            else
+                echo "Operation done, location LED status is UNKNOWN"
+                logger "Operation done, location LED status is UNKNOWN"
+            fi
+        else
+            led_status
+            ret=$?
+            if [ $ret -eq 0 ]; then
+                echo "Operation failed, location LED is ON"
+                logger "Operation failed, location LED is ON"
+            elif [ $ret -eq 1 ]; then
+                echo "Operation failed, location LED is OFF"
+                logger "Operation failed, location LED is OFF"
+            else
+                echo "Operation failed, location LED status is UNKNOWN"
+                logger "Operation failed, location LED status is UNKNOWN"
+            fi
+        fi
+    elif [ "$1" = "status" ]; then
+        led_status
+        ret=$?
+        if [ $ret -eq 0 ]; then
+            echo "Location LED is ON"
+            logger "Location LED is ON"
+        elif [ $ret -eq 1 ]; then
+            echo "Location LED is OFF"
+            logger "Location LED is OFF"
+        else
+            echo "Operation failed, current location LED status is UNKNOWN"
+            logger "Operation failed, current location LED status is UNKNOWN"
+        fi
+    fi
+fi

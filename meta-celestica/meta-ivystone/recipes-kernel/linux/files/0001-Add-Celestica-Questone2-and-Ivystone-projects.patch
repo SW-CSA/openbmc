@@ -1,0 +1,681 @@
+From 9857474f6ca34c563d14fcf4c91525e77b8cade6 Mon Sep 17 00:00:00 2001
+From: zmzhan <mzhan@celestica.com>
+Date: Thu, 18 Apr 2019 15:40:39 +0800
+Subject: [PATCH] Add Celestica Questone2 and Ivystone projects
+
+---
+ arch/arm/mach-aspeed/Kconfig             |  12 ++
+ arch/arm/plat-aspeed/Makefile            |  10 ++
+ arch/arm/plat-aspeed/dev-eth.c           |   6 +-
+ arch/arm/plat-aspeed/dev-i2c-cel.c       |  49 ++++++++
+ arch/arm/plat-aspeed/dev-sdhci.c         |   7 ++
+ arch/arm/plat-aspeed/dev-spi-fb.c        |  56 ++++++++-
+ arch/arm/plat-aspeed/dev-uart.c          |  22 +++-
+ drivers/hwmon/pmbus/pmbus_core.c         |   2 +
+ drivers/i2c/busses/i2c-ast.c             |  17 ++-
+ drivers/net/ethernet/faraday/ftgmac100.c | 195 ++++++++++++++++++++++++++++++-
+ drivers/net/phy/broadcom.c               |   2 +-
+ 11 files changed, 361 insertions(+), 17 deletions(-)
+ create mode 100644 arch/arm/plat-aspeed/dev-i2c-cel.c
+
+diff --git a/arch/arm/mach-aspeed/Kconfig b/arch/arm/mach-aspeed/Kconfig
+index e7c1e00..5412f0f 100644
+--- a/arch/arm/mach-aspeed/Kconfig
++++ b/arch/arm/mach-aspeed/Kconfig
+@@ -279,6 +279,18 @@ config PWNEPTUNE
+ 	select EGFX_IRQ
+     bool "Portwell Neptune"
+ 
++config QUESTONE2
++	select USB_ARCH_HAS_EHCI
++	select AST_UART_SDMA
++	select EGFX_IRQ
++    bool "Celestica Questone2"
++
++config IVYSTONE
++	select USB_ARCH_HAS_EHCI
++	select AST_UART_SDMA
++	select EGFX_IRQ
++    bool "Celestica IVYSTONE"
++
+ config AST_CONSOLE_UART_BASE
+     hex "Console UART base address"
+     default 0x1e783000 if CMM
+diff --git a/arch/arm/plat-aspeed/Makefile b/arch/arm/plat-aspeed/Makefile
+index 908a7f5..1f8ec39 100644
+--- a/arch/arm/plat-aspeed/Makefile
++++ b/arch/arm/plat-aspeed/Makefile
+@@ -97,6 +97,16 @@ ifeq ($(CONFIG_PWNEPTUNE), y)
+   PLATFB = 1
+ endif
+ 
++ifeq ($(CONFIG_QUESTONE2), y)
++  obj-y += dev-uart.o dev-i2c-setup-mux.o dev-i2c-cel.o
++  PLATFB = 1
++endif
++
++ifeq ($(CONFIG_IVYSTONE), y)
++  obj-y += dev-uart.o dev-i2c-setup-mux.o dev-i2c-cel.o
++  PLATFB = 1
++endif
++
+ ifeq ($(PLATFB), 1)
+   obj-y += dev-spi-fb.o dev-i2c-common.o
+ else
+diff --git a/arch/arm/plat-aspeed/dev-eth.c b/arch/arm/plat-aspeed/dev-eth.c
+index b36e5cb..bf90f53 100644
+--- a/arch/arm/plat-aspeed/dev-eth.c
++++ b/arch/arm/plat-aspeed/dev-eth.c
+@@ -45,7 +45,8 @@
+ 	defined(CONFIG_FBTTN) || defined(CONFIG_FBY2) || \
+ 	defined(CONFIG_YOSEMITE) || defined(CONFIG_MINIPACK) || \
+ 	defined(CONFIG_MINILAKETB) || defined(CONFIG_YAMP) || \
+-	defined(CONFIG_GALAXY100) || defined(CONFIG_WEDGE400)
++	defined(CONFIG_GALAXY100) || defined(CONFIG_WEDGE400) || defined(CONFIG_QUESTONE2) || \
++	defined(CONFIG_IVYSTONE)
+ #define DRVNAME "ftgmac100"
+ #else
+ #define DRVNAME "ast_gmac"
+@@ -158,7 +159,8 @@ void __init ast_add_device_gmac(void)
+ 	// MAC specs.
+ #if !defined(CONFIG_WEDGE) && !defined(CONFIG_WEDGE100) && \
+     !defined(CONFIG_CMM) && !defined(CONFIG_MINIPACK) && \
+-    !defined(CONFIG_GALAXY100) && !defined(CONFIG_WEDGE400)
++    !defined(CONFIG_GALAXY100) && !defined(CONFIG_WEDGE400) && \
++	!defined(CONFIG_IVYSTONE)
+ 
+ 	ast_eth0_data.DF_support = !isRevA0;
+ 
+diff --git a/arch/arm/plat-aspeed/dev-i2c-cel.c b/arch/arm/plat-aspeed/dev-i2c-cel.c
+new file mode 100644
+index 0000000..6e9a705
+--- /dev/null
++++ b/arch/arm/plat-aspeed/dev-i2c-cel.c
+@@ -0,0 +1,49 @@
++/*
++ * dev-i2c-cel.c - i2c device definition for Celestical Project
++ *
++ * Copyright 2014-present Facebook. All Rights Reserved.
++ *
++ * This program is free software; you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License as published by
++ * the Free Software Foundation; either version 2 of the License, or
++ * (at your option) any later version.
++ *
++ * This program is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.	 See the
++ * GNU General Public License for more details.
++ *
++ * You should have received a copy of the GNU General Public License
++ * along with this program; if not, write to the Free Software
++ * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
++ */
++
++#include <linux/platform_device.h>
++
++#include <plat/devs.h>
++#include <plat/ast_i2c.h>
++#if defined(CONFIG_QUESTONE2)
++pca954x_info_st dev_i2c_pca954x_info[] = {
++  {-1, 8, 0x77},		/* 0 */
++};
++#elif defined(CONFIG_IVYSTONE)
++pca954x_info_st dev_i2c_pca954x_info[] = {
++  {-1, 4, 0x77},		/* 0 */
++  {-1, 6, 0x77},		/* 1 */
++  {-1, 8, 0x77},		/* 2 */
++};
++#else
++pca954x_info_st dev_i2c_pca954x_info[] = {
++};
++#endif
++const int size_dev_i2c_pca954x_info =
++    sizeof(dev_i2c_pca954x_info) / sizeof(dev_i2c_pca954x_info[0]);
++
++extern void dev_i2c_add_pca954x(pca954x_info_st [],
++                                 const int n_dev_i2c_pca954x_info);
++
++void __init ast_add_device_i2c(void)
++{
++  ast_add_device_i2c_common();
++  dev_i2c_add_pca954x(dev_i2c_pca954x_info, size_dev_i2c_pca954x_info);
++}
+diff --git a/arch/arm/plat-aspeed/dev-sdhci.c b/arch/arm/plat-aspeed/dev-sdhci.c
+index 6a33da1..38e6d15 100644
+--- a/arch/arm/plat-aspeed/dev-sdhci.c
++++ b/arch/arm/plat-aspeed/dev-sdhci.c
+@@ -30,6 +30,7 @@
+ #include <plat/devs.h>
+ #include <plat/ast_sdhci.h>
+ #include <plat/ast-scu.h>
++#include <mach/hardware.h>
+ 
+ extern void ast_sd_set_8bit_mode(u8 mode);
+ 
+@@ -109,6 +110,12 @@ void __init ast_add_device_sdhci(void)
+ #if defined CONFIG_MINIPACK || defined CONFIG_YAMP || defined CONFIG_WEDGE400
+ 	ast_scu_multi_func_sdhc_slot(2);
+ #else
++#if defined(CONFIG_QUESTONE2) || defined(CONFIG_IVYSTONE)
++	writel(readl((void *)(IO_ADDRESS(AST_GPIO_BASE) + 0x1e4)) | (1 << 24), (void *)(IO_ADDRESS(AST_GPIO_BASE)+ 0x1e4));
++	writel(readl((void *)(IO_ADDRESS(AST_GPIO_BASE) + 0x1e0)) | (1 << 24), (void *)(IO_ADDRESS(AST_GPIO_BASE) + 0x1e0));
++	writel(readl((void *)(IO_ADDRESS(AST_GPIO_BASE) + 0x24)) | (1 << 29), (void *)(IO_ADDRESS(AST_GPIO_BASE)+ 0x24));
++	writel(readl((void *)(IO_ADDRESS(AST_GPIO_BASE) + 0x20)) | (1 << 29), (void *)(IO_ADDRESS(AST_GPIO_BASE) + 0x20));
++#endif
+ 	ast_scu_multi_func_sdhc_slot(3);
+ #endif
+ }
+diff --git a/arch/arm/plat-aspeed/dev-spi-fb.c b/arch/arm/plat-aspeed/dev-spi-fb.c
+index 1a68a0a..c88d0b6 100644
+--- a/arch/arm/plat-aspeed/dev-spi-fb.c
++++ b/arch/arm/plat-aspeed/dev-spi-fb.c
+@@ -284,6 +284,38 @@ static struct mtd_partition ast_primary_partitions[] = {
+ 	},
+ };
+ 
++#if defined(CONFIG_QUESTONE2) || defined(CONFIG_IVYSTONE)
++static struct mtd_partition ast_legacy_rom_partitions[] = {
++	{
++		.name       = "u-bootro",
++		.offset     = 0,        /* From 0 */
++		.size       = 0x60000,  /* Size 384K */
++		//.mask_flags = MTD_WRITEABLE,
++	}, {
++		.name       = "envro",
++		.offset     = MTDPART_OFS_APPEND,  /* From 384K */
++		.size       = 0x20000,  /* Size 128K, two sectors */
++	}, {
++		.name       = "kernelro",
++		.offset     = MTDPART_OFS_APPEND,  /* From 512K */
++		.size       = 0x400000, /* Size 4M */
++	}, {
++		.name       = "rootfsro",
++		.offset     = MTDPART_OFS_APPEND,  /* From 4.5M */
++		.size       = 0x1780000, /* Size 23.5M */
++	}, {
++		.name       = "dataro",
++		.offset     = MTDPART_OFS_APPEND,
++		.size       = MTDPART_SIZ_FULL,
++	},
++	{
++		.name       = "flashro",
++		.offset     = 0,        /* From 0 */
++		.size       = MTDPART_SIZ_FULL,  /* full size */
++	},
++};
++#endif
++
+ static struct mtd_partition ast_rom_partitions[] = {
+ 	{
+ 		.name       = "rom",               /* ROM (SPL), recovery U-boot */
+@@ -373,6 +405,14 @@ static struct flash_platform_data ast_legacy_platform_data = {
+ 	.parts      = ast_legacy_partitions,
+ };
+ 
++#if defined(CONFIG_QUESTONE2) || defined(CONFIG_IVYSTONE)
++static struct flash_platform_data ast_legacy_rom_platform_data = {
++	.type       = "mx25l25635e",
++	.nr_parts   = ARRAY_SIZE(ast_legacy_rom_partitions),
++	.parts      = ast_legacy_rom_partitions,
++};
++#endif
++
+ /* The ROM platform data is FMC.0 (CS0) */
+ static struct flash_platform_data ast_rom_platform_data = {
+ 	.type       = "mx25l25635e",
+@@ -462,6 +502,16 @@ static struct spi_board_info ast_single_flash_fmc_devices[] = {
+ 		.bus_num    		= 0,
+ 		.mode 			    = SPI_MODE_0,
+ 	},
++#if defined(CONFIG_QUESTONE2) || defined(CONFIG_IVYSTONE)
++	{
++		.modalias    		= "m25p80",
++		.platform_data  = &ast_legacy_rom_platform_data,
++		.chip_select    = 1,
++		.max_speed_hz   = 50 * 1000 * 1000,
++		.bus_num    		= 0,
++		.mode 			    = SPI_MODE_0,
++	},
++#endif
+ };
+ 
+ #ifdef CONFIG_MINIPACK || CONFIG_WEDGE400
+@@ -474,10 +524,10 @@ static struct spi_eeprom m95m02 = {
+ #endif
+ 
+ #if defined(CONFIG_FBTP)  || defined (CONFIG_WEDGE100) || defined (CONFIG_PWNEPTUNE) || \
+-    defined(CONFIG_MINIPACK) || defined (CONFIG_WEDGE400)
++    defined(CONFIG_MINIPACK) || defined (CONFIG_WEDGE400) || defined(CONFIG_QUESTONE2) || defined(CONFIG_IVYSTONE)
+ static struct spi_board_info ast_spi0_devices[] = {
+     {
+-#if defined(CONFIG_WEDGE100) || defined(CONFIG_MINIPACK) || defined(CONFIG_WEDGE400)
++#if defined(CONFIG_WEDGE100) || defined(CONFIG_MINIPACK) || defined(CONFIG_WEDGE400) || defined(CONFIG_QUESTONE2) || defined(CONFIG_IVYSTONE)
+         .modalias           = "spidev",
+         .chip_select        = 0,
+         .max_speed_hz       = 33 * 1000 * 1000,
+@@ -566,7 +616,7 @@ void __init ast_add_device_spi(void)
+   } else {
+     spi_register_board_info(ast_single_flash_fmc_devices, ARRAY_SIZE(ast_single_flash_fmc_devices));
+   }
+-#if defined(CONFIG_FBTP) || defined(CONFIG_WEDGE100) || defined(CONFIG_PWNEPTUNE)
++#if defined(CONFIG_FBTP) || defined(CONFIG_WEDGE100) || defined(CONFIG_PWNEPTUNE) || defined(CONFIG_QUESTONE2) || defined(CONFIG_IVYSTONE)
+ 	platform_device_register(&ast_spi0_device);
+ 	spi_register_board_info(ast_spi0_devices, ARRAY_SIZE(ast_spi0_devices));
+ #elif defined(CONFIG_MINIPACK) || defined(CONFIG_WEDGE400)
+diff --git a/arch/arm/plat-aspeed/dev-uart.c b/arch/arm/plat-aspeed/dev-uart.c
+index 80a6612..95ca9cd 100644
+--- a/arch/arm/plat-aspeed/dev-uart.c
++++ b/arch/arm/plat-aspeed/dev-uart.c
+@@ -195,7 +195,7 @@ static struct plat_serial8250_port ast_uart_data[] = {
+ /* Without this, tty offset might change for others */
+ #if defined(CONFIG_YOSEMITE) || defined(CONFIG_FBTP) ||  defined(CONFIG_FBY2) || defined(CONFIG_PWNEPTUNE) || \
+     defined(CONFIG_MINIPACK) || defined(CONFIG_MINILAKETB) || \
+-    defined(CONFIG_YAMP) || defined(CONFIG_WEDGE400)
++    defined(CONFIG_YAMP) || defined(CONFIG_WEDGE400) || defined(CONFIG_QUESTONE2) || defined(CONFIG_IVYSTONE)
+ 	{
+ 		.mapbase	= AST_UART2_BASE,
+ 		.irq		= IRQ_UART2,
+@@ -227,6 +227,18 @@ static struct plat_serial8250_port ast_uart_data[] = {
+ 		.flags		= UPF_IOREMAP | UPF_BOOT_AUTOCONF | UPF_SKIP_TEST,
+ 	},
+ #endif
++#if defined(CONFIG_QUESTONE2)
++#ifdef AST_UART5_BASE
++	{
++		.mapbase	= AST_UART5_BASE,
++		.irq		= IRQ_UART5,
++		.uartclk	= (24*1000000L),
++		.regshift	= 2,
++		.iotype 	= UPIO_MEM,
++		.flags		= UPF_IOREMAP | UPF_BOOT_AUTOCONF | UPF_SKIP_TEST,
++	},
++#endif
++#endif
+ #endif
+ 	{},
+ 
+@@ -429,11 +441,17 @@ writel(readl(reg_base + AST_LPC_HICR9)
+ iounmap(reg_base);
+ #elif defined(CONFIG_LIGHTNING)
+ 
+-#elif defined(CONFIG_MINIPACK) || defined(CONFIG_YAMP) || defined(CONFIG_WEDGE400)
++#elif defined(CONFIG_MINIPACK) || defined(CONFIG_YAMP) || defined(CONFIG_WEDGE400)  || defined(CONFIG_IVYSTONE)
++	ast_scu_multi_func_uart(1);
++	ast_scu_multi_func_uart(2);
++	ast_scu_multi_func_uart(3);
++	ast_scu_multi_func_uart(4);
++#elif defined(CONFIG_QUESTONE2)
+ 	ast_scu_multi_func_uart(1);
+ 	ast_scu_multi_func_uart(2);
+ 	ast_scu_multi_func_uart(3);
+ 	ast_scu_multi_func_uart(4);
++	ast_scu_multi_func_uart(6);
+ #else
+ 	ast_scu_multi_func_uart(1);
+ 	ast_scu_multi_func_uart(3);
+diff --git a/drivers/hwmon/pmbus/pmbus_core.c b/drivers/hwmon/pmbus/pmbus_core.c
+index f8e7ce5..fef8a63 100644
+--- a/drivers/hwmon/pmbus/pmbus_core.c
++++ b/drivers/hwmon/pmbus/pmbus_core.c
+@@ -1094,6 +1094,7 @@ static int pmbus_add_sensor_attrs_one(struct i2c_client *client,
+ 				attr->class, true, true);
+ 	if (!base)
+ 		return -ENOMEM;
++#if !defined (CONFIG_IVYSTONE)
+ 	if (attr->sfunc) {
+ 		ret = pmbus_add_limit_attrs(client, data, info, name,
+ 					    index, page, base, attr);
+@@ -1115,6 +1116,7 @@ static int pmbus_add_sensor_attrs_one(struct i2c_client *client,
+ 				return ret;
+ 		}
+ 	}
++#endif
+ 	return 0;
+ }
+ 
+diff --git a/drivers/i2c/busses/i2c-ast.c b/drivers/i2c/busses/i2c-ast.c
+index ecaa88f..fed6229 100644
+--- a/drivers/i2c/busses/i2c-ast.c
++++ b/drivers/i2c/busses/i2c-ast.c
+@@ -540,7 +540,11 @@ ast_i2c_slave_reset(struct ast_i2c_dev *i2c_dev)
+ 	tmp_func_ctrl_reg = i2c_dev->func_ctrl_reg;
+ 
+ 	//Let's retry 10 times
++#ifdef CONFIG_IVYSTONE
++	for (i = 0; i < 1; i++) {
++#else
+ 	for (i = 0; i < 10; i++) {
++#endif
+     dev_err(i2c_dev->dev, "slave reset retry%d\n",i);
+ 		ast_i2c_dev_init(i2c_dev);
+ 
+@@ -565,7 +569,11 @@ ast_i2c_slave_reset(struct ast_i2c_dev *i2c_dev)
+ 			break ;
+ 		}
+ 	}
++#ifdef CONFIG_IVYSTONE
++	if (i == 1) {
++#else
+ 	if (i == 10) {
++#endif
+ 		i2c_dev->func_ctrl_reg = tmp_func_ctrl_reg;
+ 		dev_err(i2c_dev->dev, "ERROR!! recovery failed\n");
+ 		i2c_dev->adap.bus_status |= 0x1 << SLAVE_DEAD_RECOVER_ERROR;
+@@ -2293,12 +2301,13 @@ static int ast_i2c_probe(struct platform_device *pdev)
+  	/* Initialize the I2C adapter */
+ 	i2c_dev->adap.owner   = THIS_MODULE;
+ //TODO
+-	// i2c_dev->adap.retries = 0;
+-
++#ifdef CONFIG_IVYSTONE
++	i2c_dev->adap.retries = 0;
++	i2c_dev->adap.timeout = 1;
++#else
+ 	i2c_dev->adap.retries = 3;
+-
+ 	i2c_dev->adap.timeout = 5;
+-
++#endif
+ 	i2c_dev->master_xfer_mode = BYTE_XFER;
+ 
+ 	/*
+diff --git a/drivers/net/ethernet/faraday/ftgmac100.c b/drivers/net/ethernet/faraday/ftgmac100.c
+index 303bc65..cba45fc 100644
+--- a/drivers/net/ethernet/faraday/ftgmac100.c
++++ b/drivers/net/ethernet/faraday/ftgmac100.c
+@@ -2580,18 +2580,26 @@ static bool ftgmac100_rx_packet_error(struct ftgmac100 *priv,
+ 	bool error = false;
+ 
+ 	if (unlikely(ftgmac100_rxdes_rx_error(rxdes))) {
++#if !defined(CONFIG_IVYSTONE)
+ 		if (net_ratelimit())
+ 			netdev_info(netdev, "rx err\n");
+ 
+ 		netdev->stats.rx_errors++;
++#else
++		netdev->stats.rx_errors++;
++#endif
+ 		error = true;
+ 	}
+ 
+ 	if (unlikely(ftgmac100_rxdes_crc_error(rxdes))) {
++#if !defined(CONFIG_IVYSTONE)
+ 		if (net_ratelimit())
+ 			netdev_info(netdev, "rx crc err\n");
+ 
+ 		netdev->stats.rx_crc_errors++;
++#else
++		netdev->stats.rx_crc_errors++;
++#endif
+ 		error = true;
+ 	} else if (unlikely(ftgmac100_rxdes_ipcs_err(rxdes))) {
+ 		if (net_ratelimit())
+@@ -2601,22 +2609,32 @@ static bool ftgmac100_rx_packet_error(struct ftgmac100 *priv,
+ 	}
+ 
+ 	if (unlikely(ftgmac100_rxdes_frame_too_long(rxdes))) {
++#if !defined(CONFIG_IVYSTONE)
+ 		if (net_ratelimit())
+ 			netdev_info(netdev, "rx frame too long\n");
+ 
+ 		netdev->stats.rx_length_errors++;
++#else
++		netdev->stats.rx_length_errors++;
++#endif
+ 		error = true;
++#if !defined(CONFIG_IVYSTONE)
+ 	} else if (unlikely(ftgmac100_rxdes_runt(rxdes))) {
+ 		if (net_ratelimit())
+ 			netdev_info(netdev, "rx runt\n");
+ 
+ 		netdev->stats.rx_length_errors++;
+ 		error = true;
++#endif
+ 	} else if (unlikely(ftgmac100_rxdes_odd_nibble(rxdes))) {
++#if !defined(CONFIG_IVYSTONE)
+ 		if (net_ratelimit())
+ 			netdev_info(netdev, "rx odd nibble\n");
+ 
+ 		netdev->stats.rx_length_errors++;
++#else
++		netdev->stats.rx_length_errors++;
++#endif
+ 		error = true;
+ 	}
+ 
+@@ -3074,7 +3092,11 @@ static int ftgmac100_mii_probe(struct ftgmac100 *priv)
+ 	for (i = 0; i < PHY_MAX_ADDR; i++) {
+ 		struct phy_device *tmp = priv->mii_bus->phy_map[i];
+ 
++#if defined(CONFIG_IVYSTONE)
++		if (tmp && (tmp->addr == 0x0d)) {
++#else
+ 		if (tmp) {
++#endif
+ 			phydev = tmp;
+ 			break;
+ 		}
+@@ -3173,6 +3195,158 @@ static int ftgmac100_mdiobus_write(struct mii_bus *bus, int phy_addr,
+ }
+ #endif // #ifndef CONFIG_FTGMAC100_NCSI
+ 
++#if defined(CONFIG_IVYSTONE)
++static int mdio_val = 0;
++static int led_ctrl_val = 0;
++static struct workqueue_struct *led_wq = NULL;
++static struct delayed_work led_dwq;
++static struct mii_bus *mii_bus_p = NULL;
++
++static void led_delay_worker(struct work_struct *work)
++{
++	int speed, val;
++	struct workqueue_struct *wq = led_wq;
++
++
++	val = ftgmac100_mdiobus_read(mii_bus_p, 0x0e, 0x19); //read link speed
++	if(val < 0) {
++		return;
++	}
++	val = (val >> 8) & 0x07;
++	switch(val) {
++		case 0x1:
++		case 0x2:
++			speed = 10;
++			ftgmac100_mdiobus_write(mii_bus_p, 0x0e, 0x1c, 0xb4fe);//10M LED
++			break;
++		case 0x3:
++		case 0x4:
++		case 0x5:
++			speed = 100;
++			ftgmac100_mdiobus_write(mii_bus_p, 0x0e, 0x1c, 0xb4fe);//100M LED
++			break;
++		case 0x6:
++		case 0x7:
++			speed = 1000;
++			ftgmac100_mdiobus_write(mii_bus_p, 0x0e, 0x1c, 0xb4ef);//1000M LED
++			break;
++		default:
++			speed = 0;
++			ftgmac100_mdiobus_write(mii_bus_p, 0x0e, 0x1c, 0xb4ee);//No link
++			break;
++	}
++
++    val = ftgmac100_mdiobus_read(mii_bus_p, 0x0f, 0x19); //read link speed
++	if(val < 0) {
++		return;
++	}
++	val = (val >> 8) & 0x07;
++	switch(val) {
++		case 0x1:
++		case 0x2:
++			speed = 10;
++			ftgmac100_mdiobus_write(mii_bus_p, 0x0f, 0x1c, 0xb4fe);//10M LED
++			break;
++		case 0x3:
++		case 0x4:
++		case 0x5:
++			speed = 100;
++			ftgmac100_mdiobus_write(mii_bus_p, 0x0f, 0x1c, 0xb4fe);//100M LED
++			break;
++		case 0x6:
++		case 0x7:
++			speed = 1000;
++			ftgmac100_mdiobus_write(mii_bus_p, 0x0f, 0x1c, 0xb4ef);//1000M LED
++			break;
++		default:
++			speed = 0;
++			ftgmac100_mdiobus_write(mii_bus_p, 0x0f, 0x1c, 0xb4ee);//No link
++			break;
++	}
++
++	if(led_ctrl_val)
++		queue_delayed_work(wq, work, HZ);
++
++	return;
++}
++
++static ssize_t mdio_read(struct device *dev,
++        struct device_attribute *attr, char *buf)
++{
++	return sprintf(buf, "0x%x\n", mdio_val);
++
++}
++
++static int mdio_write(struct device *dev,
++        struct device_attribute *attr, const char *buf, size_t count)
++{
++	int phy_addr, reg, val = -1;
++	struct mii_bus *mii_bus = container_of(dev, struct mii_bus, dev);
++
++	if(sscanf(buf, "%i %i %i", &phy_addr, &reg, &val) <= 0) {
++		return -EINVAL;
++	}
++
++	if(val == -1) { //read
++		mdio_val = ftgmac100_mdiobus_read(mii_bus, phy_addr, reg);
++	} else {
++		ftgmac100_mdiobus_write(mii_bus, phy_addr, reg, val);
++		mdio_val = -1;
++	}
++
++	return count;
++}
++
++static ssize_t led_ctrl_read(struct device *dev,
++        struct device_attribute *attr, char *buf)
++{
++	return sprintf(buf, "%d\n", led_ctrl_val);
++
++}
++
++static int led_ctrl_write(struct device *dev,
++        struct device_attribute *attr, const char *buf, size_t count)
++{
++	int val = -1;
++	struct mii_bus *mii_bus = container_of(dev, struct mii_bus, dev);
++
++	if(sscanf(buf, "%i", &val) <= 0) {
++		return -EINVAL;
++	}
++
++	if(val == 1) {
++		if(led_ctrl_val == 1)
++			return count;
++
++		led_wq = create_workqueue("Led workqueue");
++		if (led_wq == NULL) {
++			printk("ftgmac: error creating Led workqueue for %s", mii_bus->name);
++		} else {
++			INIT_DELAYED_WORK(&led_dwq, led_delay_worker);
++			led_ctrl_val = 1;
++			queue_delayed_work(led_wq, &led_dwq, HZ);
++		}
++	} else {
++		led_ctrl_val = 0;
++	}
++
++	return count;
++}
++
++static DEVICE_ATTR(mdio, S_IRUGO | S_IWUSR, mdio_read, mdio_write);
++static DEVICE_ATTR(led_ctrl, S_IRUGO | S_IWUSR, led_ctrl_read, led_ctrl_write);
++
++static struct attribute *mdio_attrs[] = {
++	 &dev_attr_mdio.attr,
++	 &dev_attr_led_ctrl.attr,
++	 NULL
++};
++static struct attribute_group mdio_attr_group = {
++     .attrs = mdio_attrs,
++};
++
++#endif
++
+ /******************************************************************************
+  * struct ethtool_ops functions
+  *****************************************************************************/
+@@ -3274,12 +3448,13 @@ static int ftgmac100_poll(struct napi_struct *napi, int budget)
+ 					 | FTGMAC100_INT_PHYSTS_CHG
+ #endif
+ 		 )) {
++#if !defined(CONFIG_IVYSTONE)
+ 		if (net_ratelimit())
+ 			netdev_info(netdev, "[ISR] = 0x%x: %s%s%s\n", status,
+ 			status & FTGMAC100_INT_NO_RXBUF ? "NO_RXBUF " : "",
+ 			status & FTGMAC100_INT_RPKT_LOST ? "RPKT_LOST " : "",
+ 			status & FTGMAC100_INT_AHB_ERR ? "AHB_ERR " : "");
+-
++#endif
+ 		if (status & FTGMAC100_INT_NO_RXBUF) {
+ 			/* RX buffer unavailable */
+ 			netdev->stats.rx_over_errors++;
+@@ -3342,11 +3517,11 @@ static int ftgmac100_open(struct net_device *netdev)
+ 	ftgmac100_init_hw(priv);
+ 
+ #if defined(CONFIG_WEDGE) || defined(CONFIG_WEDGE100) || \
+-    defined(CONFIG_CMM) || defined(CONFIG_PWNEPTUNE) || \
+-    defined(CONFIG_MINIPACK) || defined(CONFIG_GALAXY100) || \
+-    defined(CONFIG_MINILAKETB) || defined(CONFIG_WEDGE400)
++    defined(CONFIG_CMM) || defined (CONFIG_PWNEPTUNE) || \
++    defined(CONFIG_MINIPACK) || defined (CONFIG_GALAXY100) || \
++    defined(CONFIG_MINILAKETB) || defined(CONFIG_WEDGE400) ||  defined (CONFIG_IVYSTONE)
+ 	ftgmac100_start_hw(priv, 1000);
+-#elif defined(CONFIG_FBTP)
++#elif defined(CONFIG_FBTP) || defined(CONFIG_QUESTONE2)
+ 	ftgmac100_start_hw(priv, 100);
+ #elif defined(CONFIG_YAMP)
+ 	ftgmac100_start_hw(priv, 100);
+@@ -3612,6 +3787,16 @@ static int ftgmac100_probe(struct platform_device *pdev)
+ 		goto err_mii_probe;
+ 	}
+ 
++#if defined(CONFIG_IVYSTONE)
++	ftgmac100_mdiobus_write(priv->mii_bus, 0x0e, 0x04, 0x01e1);
++	ftgmac100_mdiobus_write(priv->mii_bus, 0x0f, 0x04, 0x01e1);
++
++	mii_bus_p = priv->mii_bus;
++	sysfs_create_group(&priv->mii_bus->dev.kobj, &mdio_attr_group);
++    netdev->hw_features &= ~(NETIF_F_HW_CSUM | NETIF_F_RXCSUM);
++    netdev->features |= netdev->hw_features;
++#endif
++
+ #endif
+ 
+ 	/* register network device */
+diff --git a/drivers/net/phy/broadcom.c b/drivers/net/phy/broadcom.c
+index 361e373..6bec5cab 100644
+--- a/drivers/net/phy/broadcom.c
++++ b/drivers/net/phy/broadcom.c
+@@ -372,7 +372,7 @@ static int bcm54616s_config_aneg(struct phy_device *phydev)
+ 
+ #if defined(CONFIG_WEDGE) || defined(CONFIG_WEDGE100) || defined(CONFIG_CMM) || \
+ 	defined(CONFIG_MINIPACK) || defined(CONFIG_YAMP) || defined(CONFIG_WEDGE400) || \
+-	defined(CONFIG_GALAXY100)
++	defined(CONFIG_GALAXY100) || defined(CONFIG_IVYSTONE)
+ 	/* disable GTXCLK Clock Delay */
+ 	phy_write(phydev, 0x1C, 0x8C00);
+ 	/* Disable RGMII RXD to RXC skew */
+-- 
+2.7.4
+

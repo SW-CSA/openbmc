@@ -1,0 +1,196 @@
+#!/bin/bash
+#
+# Copyright 2018-present Celestica. All Rights Reserved.
+#
+# This program file is free software; you can redistribute it and/or modify it
+# under the terms of the GNU General Public License as published by the
+# Free Software Foundation; version 2 of the License.
+#
+# This program is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+# for more details.
+#
+#
+
+. /usr/local/bin/openbmc-utils.sh
+
+PATH=/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/bin
+
+prog="$0"
+
+usage() {
+    echo "Usage: $prog <command>"
+    echo
+    echo "Commands:"
+    echo "  status: Get the current cpu power status"
+    echo
+    echo "  off: Power off cpu"
+    echo
+    echo "  on: Power on cpu"
+    echo
+    echo "  cycle: Power cycle cpu"
+    echo
+}
+
+do_status() {
+	wedge_is_us_on
+	ret=$?
+    if [ $ret -eq 0 ]; then
+        echo "Current CPU power status is ON"
+        logger "Current CPU power status is ON"
+    elif [ $ret -eq 1 ]; then
+        echo "Current CPU power status is OFF"
+        logger "Current CPU power status is OFF"
+	else
+		echo "Operation failed, current CPU power status is UNKNOWN"
+		logger "Operation failed, current CPU power status is UNKNOWN"
+    fi
+    return 0
+}
+
+do_on() {
+    local force opt ret
+    force=0
+    while getopts "f" opt; do
+        case $opt in
+            f)
+                force=1
+                ;;
+            *)
+                usage
+                exit -1
+                ;;
+
+        esac
+    done
+    if [ $force -eq 0 ]; then
+        # need to check if uS is on or not
+        if wedge_is_us_on 10 "."; then
+            echo "Operation failed, current CPU power status is ON"
+            logger -p user.warning "Operation failed, current CPU power status is ON"
+            return 1
+        fi
+    fi
+
+    # power on sequence
+    wedge_power on
+    ret=$?
+    if [ $ret -eq 0 ]; then
+	    wedge_is_us_on
+	    ret=$?
+        if [ $ret -eq 0 ]; then
+            echo "Operation done, current CPU power status is ON"
+            logger -p user.warning "Operation done, current CPU power status is ON"
+	    else
+            echo "Operation done, current CPU power status is UNKNOWN"
+            logger -p user.warning "Operation done, current CPU power status is UNKNOWN"
+        fi
+    else
+	    wedge_is_us_on
+	    ret=$?
+        if [ $ret -eq 0 ]; then
+            echo "Operation failed, current CPU power status is ON"
+            logger -p user.warning "Operation failed, current CPU power status is ON"
+        elif [ $ret -eq 1 ]; then
+            echo "Operation failed, current CPU power status is OFF"
+            logger -p user.warning "Operation failed, current CPU power status is OFF"
+	    else
+            echo "Operation failed, current CPU power status is UNKNOWN"
+            logger -p user.warning "Operation failed, current CPU power status is UNKNOWN"
+        fi
+    fi
+    return $ret
+}
+
+do_off() {
+    local ret
+    wedge_power off
+    ret=$?
+    if [ $ret -eq 1 ]; then
+	    wedge_is_us_on
+	    ret=$?
+        if [ $ret -eq 1 ]; then
+            echo "Operation done, current CPU power status is OFF"
+            logger -p user.warning "Operation done, current CPU power status is OFF"
+	    else
+            echo "Operation done, current CPU power status is UNKNOWN"
+            logger -p user.warning "Operation done, current CPU power status is UNKNOWN"
+        fi
+    else
+	    wedge_is_us_on
+	    ret=$?
+        if [ $ret -eq 0 ]; then
+            echo "Operation failed, current CPU power status is ON"
+            logger -p user.warning "Operation failed, current CPU power status is ON"
+        elif [ $ret -eq 1 ]; then
+            echo "Operation failed, current CPU power status is OFF"
+            logger -p user.warning "Operation failed, current CPU power status is OFF"
+	    else
+            echo "Operation failed, current CPU power status is UNKNOWN"
+            logger -p user.warning "Operation failed, current CPU power status is UNKNOWN"
+        fi
+    fi
+    return $ret
+}
+
+do_cycle() {
+    local ret
+    wedge_power cycle
+    ret=$?
+    if [ $ret -eq 0 ]; then
+	    wedge_is_us_on
+	    ret=$?
+        if [ $ret -eq 0 ]; then
+            echo "Operation done, current CPU power status is ON"
+            logger -p user.warning "Operation done, current CPU power status is ON"
+	    else
+            echo "Operation done, current CPU power status is UNKNOWN"
+            logger -p user.warning "Operation done, current CPU power status is UNKNOWN"
+        fi
+    else
+	    wedge_is_us_on
+	    ret=$?
+        if [ $ret -eq 0 ]; then
+            echo "Operation failed, current CPU power status is ON"
+            logger -p user.warning "Operation failed, current CPU power status is ON"
+        elif [ $ret -eq 1 ]; then
+            echo "Operation failed, current CPU power status is OFF"
+            logger -p user.warning "Operation failed, current CPU power status is OFF"
+	    else
+            echo "Operation failed, current CPU power status is UNKNOWN"
+            logger -p user.warning "Operation failed, current CPU power status is UNKNOWN"
+        fi
+    fi
+    return $ret
+}
+
+
+if [ $# -lt 1 ]; then
+    usage
+    exit -1
+fi
+
+command="$1"
+shift
+
+case "$command" in
+    status)
+        do_status $@
+        ;;
+    on)
+        do_on $@
+        ;;
+    off)
+        do_off $@
+        ;;
+    cycle)
+        do_cycle $@
+        ;;
+    *)
+        usage
+        exit -1
+        ;;
+esac
+
+exit $?
