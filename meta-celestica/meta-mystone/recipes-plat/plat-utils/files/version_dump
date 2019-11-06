@@ -1,0 +1,27 @@
+#!/bin/bash
+#
+# Copyright 2015-present Facebook. All Rights Reserved.
+#
+# This program file is free software; you can redistribute it and/or modify it
+# under the terms of the GNU General Public License as published by the
+# Free Software Foundation; version 2 of the License.
+#
+# This program is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+# for more details.
+#
+#BMC version
+echo "BMC version:"
+cat /etc/issue
+
+#system CPLD version
+syscpld_rev=$(cat /sys/bus/i2c/devices/i2c-0/0-000d/version | head -n 1 | awk -F "0x" '{print $2}')
+fancpld_rev=$(cat /sys/bus/i2c/devices/i2c-8/8-000d/version | head -n 1 | awk -F "0x" '{print $2}')
+printf "SYS CPLD Version: V%02d\n" ${syscpld_rev}
+printf "FAN CPLD Version: V%02d\n" ${fancpld_rev}
+
+#FPGA version
+#fpga_rev=$(i2cset -f -y 5 0x36 0x0 0x0;i2cget -f -y 5 0x36 | head -n 1 | awk -F "0x" '{print $2}')
+#printf "FPGA Version: V%02d\n" ${fpga_rev}
+
