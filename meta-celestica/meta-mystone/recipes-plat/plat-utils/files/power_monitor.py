@@ -7,26 +7,15 @@ import time
 import syslog
 
 
-PSU_NUM = 4
-IR358X_NUM = 20
-TEMP_NUM = 11
+PSU_NUM = 2
+IR358X_NUM = 8
+TEMP_NUM = 2
 MONITOR_POLL_TIME = (60 * 10) #10 mins
 MonitorItem = [
 ######sensors#######
-	['PSU', 'dps1100-i2c-27-58', 'dps1100-i2c-26-58', 'dps1100-i2c-25-58', 'dps1100-i2c-24-58'], #PSU
-	['IR358x', 'ir3584-i2c-4-15', 'ir3584-i2c-4-16', 'ir38062-i2c-4-42', 
-	'ir3584-i2c-16-70', 'ir38062-i2c-16-49', 
-	'ir38060-i2c-17-45', 'ir38062-i2c-17-49', 
-	'ir3584-i2c-19-30', 'ir3584-i2c-19-50', 'ir3584-i2c-19-70', 
-	'ir3584-i2c-20-50', 'ir3584-i2c-20-70', 'ir38060-i2c-20-45', 
-	'ir3584-i2c-21-30', 'ir3584-i2c-21-50', 'ir3584-i2c-21-70', 
-	'ir3584-i2c-22-50', 'ir3584-i2c-22-70', 'ir38060-i2c-22-45', 
-	'ir38060-i2c-23-45'], #IR358x
-	#['Temp', 'tmp75-i2c-7-4d', 'tmp75-i2c-7-4e', 'tmp75-i2c-7-4f', 
-	#'tmp75-i2c-31-48', 'tmp75-i2c-31-49', 
-	#'tmp75-i2c-39-48', 'tmp75-i2c-39-49', 
-	#'tmp75-i2c-42-48', 'tmp75-i2c-42-49', 
-	#'tmp75-i2c-43-48', 'tmp75-i2c-43-49'], #Temp
+['PSU', 'dps1100-i2c-25-59', 'dps1100-i2c-24-58'], #PSU
+['IR358x', 'ir38060-i2c-4-43', 'ir38062-i2c-4-49', 'ir3595-i2c-16-12', 'ir38060-i2c-17-47', 'ir3584-i2c-18-70', 'ir3584-i2c-18-71', 'ir3584-i2c-4-15', 'ir3584-i2c-4-16'], #IR358x
+#['Temp', 'tmp75-i2c-7-4d', 'tmp75-i2c-39-48'], #Temp
 ]
 
 psu_obj = [0]*PSU_NUM
@@ -50,26 +39,14 @@ psu_name_map = [
 ]
 
 powerchip_name_map = [
-	['ir3584-i2c-4-15'     , 'CPU_CORE VCCIN_1.82V(CPU core 1.82V'],
-	['ir3584-i2c-4-16'     , 'CPU_VCC/VCCIO_1.05V(CPU 1.05V voltage'],
-	['ir38062-i2c-4-42'    , 'Baseboard_Standby_3.3V Voltage(Baseboard standby 3.3V'],
-	['ir3584-i2c-16-70'    , 'Switch_TRVDD_0.8V Voltage(Switch TRVDD 0.8V'],
-	['ir38062-i2c-16-49'   , 'Switch_TVDD_1.2V(Switch TVDD 1.2V'],
-	['ir38060-i2c-17-45'   , 'Switch_FPGA_1.0V Voltage(Switch FPGA 1.0V'],
-	['ir38062-i2c-17-49'   , 'Switch_PVDD_0.8V Voltage(Switch PVDD 0.8V'],
-	['ir3584-i2c-19-30'    , 'TOP_LC_port&CPLD_Supply_3.3V(TOP Linecard 3.3V'],
-	['ir3584-i2c-19-50'    , 'TOP_LC_VDD_A_0.8(TOP Linecard left DVDD 0.8V'],
-	['ir3584-i2c-19-70'    , 'TOP_LC_DVDDM_A_0.8V(TOP Linecard left DVDDM 0.8V'],
-	['ir3584-i2c-20-50'    , 'TOP_LC_VDD_B_0.8V(TOP Linecard right DVDD 0.8V'],
-	['ir3584-i2c-20-70'    , 'TOP_LC_DVDDM_B_0.8V(TOP Linecard right DVDDM 0.8V'],
-	['ir38060-i2c-20-45'   , 'TOP_LC_VDDIO_1.8V Voltage(TOP Linecard I/O 1.8V'],
-	['ir3584-i2c-21-30'    , 'BOTTOM_LC_port&CPLD_Supply_3.3V(BOTTOM Linecard 3.3V'],
-	['ir3584-i2c-21-50'    , 'BOTTOM_LC_VDD_A_0.8V(BOTTOM Linecard left DVDD 0.8V'],
-	['ir3584-i2c-21-70'    , 'BOTTOM_LC_DVDDM_A_0.8V(BOTTOM Linecard left DVDDM 0.8V'],
-	['ir3584-i2c-22-50'    , 'BOTTOM_LC_VDD_B_0.8V(BOTTOM Linecard right DVDD 0.8V'],
-	['ir3584-i2c-22-70'    , 'BOTTOM_LC_DVDDM_A_0.8V(BOTTOM Linecard right DVDDM 0.8V'],
-	['ir38060-i2c-22-45'   , 'BOTTOM_LC_VDDIO_1.8V(BOTTOM Linecard I/O 1.8V'],
-	['ir38060-i2c-23-45'   , 'Switch_Standby_3.3V(Switch standby 3.3V'],	
+	['ir3584-i2c-4-15'    , 'CPU_CORE VCCIN_1.82V(CPU core 1.82V'],
+	['ir3584-i2c-4-16'    , 'CPU_VCC/VCCIO_1.05V(CPU 1.05V voltage'],
+	['ir38060-i2c-4-43'   , 'Basebord_FPGA_1.0V(Baseboard FPGA 1.0V'],
+	['ir38062-i2c-4-49'   , 'Baseboard_3.3V(Baseboard 3.3V'],
+	['ir3595-i2c-16-12'   , 'SWITCH_AVS Core_0.85V(Switch AVS core 0.85V'],
+	['ir38060-i2c-17-47'  , 'SWITCH_Analog/Digital_1.2V(Switch analog/digital 1.2V'],
+	['ir3584-i2c-18-70'   , 'SWITCH_IO_3.3V(Switch IO 3.3V'],
+	['ir3584-i2c-18-71'   , 'SWITCH_Analog_0.8V(Switch analog 0.8V'],
 ]
 
 class Alarm_Data():
@@ -257,96 +234,110 @@ class PSU_Obj():
 		self.ac_ok = 0
 		self.power_type = -1
 
-	def get_psu_present(self, num):
-		cmd = 'cat /sys/bus/i2c/devices/i2c-0/0-000d/psu_' + str(PSU_NUM - num) + '_present | head -n 1'
+	def get_psu_present(self):
+		if self.name == 'dps1100-i2c-24-58':
+			cmd = 'cat /sys/bus/i2c/devices/i2c-0/0-000d/psu_l_present | head -n 1'
+		else:
+			cmd = 'cat /sys/bus/i2c/devices/i2c-0/0-000d/psu_r_present | head -n 1'
 		sys.stdout.flush()
 		recv = os.popen(cmd).read()
 		if recv.strip() == '0x0':
 			self.present = 1
 		else:
 			self.present = 0
+		#print ('get_psu_present return ' + str(self.present)) #zmzhan add temp
 
 
 	def get_psu_power_ok(self, num):
-		cmd = 'cat /sys/bus/i2c/devices/i2c-0/0-000d/psu_' + str(PSU_NUM - num) + '_status | head -n 1'
+		if self.name == 'dps1100-i2c-24-58':
+			cmd = 'cat /sys/bus/i2c/devices/i2c-0/0-000d/psu_l_status | head -n 1'
+		else:
+			cmd = 'cat /sys/bus/i2c/devices/i2c-0/0-000d/psu_r_status | head -n 1'
 		sys.stdout.flush()
 		recv = os.popen(cmd).read()
 		if recv.strip() == '0x1':
 			if self.power_on == 0:
-				syslog.syslog(syslog.LOG_WARNING, 'PSU' + psu_rename(num + 1) + ' Output Voltage status is NORMAL')
+				syslog.syslog(syslog.LOG_WARNING, 'PSU' + str(num + 1) + ' Output Voltage status is NORMAL')
 				self.power_on = 1
 		else:
 			if self.power_on == 1:
-				syslog.syslog(syslog.LOG_CRIT, 'PSU' + psu_rename(num + 1) + ' Output Voltage status is ABNORMAL')
+				syslog.syslog(syslog.LOG_CRIT, 'PSU' + str(num + 1) + ' Output Voltage status is ABNORMAL')
 				self.power_on = 0
 
 
 	def get_psu_ac_ok(self, num):
-		cmd = 'cat /sys/bus/i2c/devices/i2c-0/0-000d/psu_' + str(PSU_NUM - num) + '_ac_status | head -n 1'
+		if self.name == 'dps1100-i2c-24-58':
+			cmd = 'cat /sys/bus/i2c/devices/i2c-0/0-000d/psu_l_ac_status | head -n 1'
+		else:
+			cmd = 'cat /sys/bus/i2c/devices/i2c-0/0-000d/psu_r_ac_status | head -n 1'
 		sys.stdout.flush()
 		recv = os.popen(cmd).read()
 		if recv.strip() == '0x1':
 			if self.ac_ok == 0:
-				syslog.syslog(syslog.LOG_WARNING, 'PSU' + psu_rename(num + 1) + ' Input Voltage status is NORMAL')
+				syslog.syslog(syslog.LOG_WARNING, 'PSU' + str(num + 1) + ' Input Voltage status is NORMAL')
 				self.ac_ok = 1
 		else:
 			if self.ac_ok == 1:
-				syslog.syslog(syslog.LOG_CRIT, 'PSU' + psu_rename(num + 1) + ' Input Voltage status is ABNORMAL')
+				syslog.syslog(syslog.LOG_CRIT, 'PSU' + str(num + 1) + ' Input Voltage status is ABNORMAL')
 				self.ac_ok = 0
 
 	def get_psu_power_type(self, num):
-		min_threshold_cmd = ''
-		max_threshold_cmd = ''
-		if num == 0:
-			cmd = 'i2cget -f -y 27 0x58 0xd8'
-			min_threshold_cmd = 'source /usr/local/bin/openbmc-utils.sh;set_hwmon_threshold 27 58 in1_min'
-			max_threshold_cmd = 'source /usr/local/bin/openbmc-utils.sh;set_hwmon_threshold 27 58 in1_max'
-		elif num == 1:
-			cmd = 'i2cget -f -y 26 0x58 0xd8'
-			min_threshold_cmd = 'source /usr/local/bin/openbmc-utils.sh;set_hwmon_threshold 26 58 in1_min'
-			max_threshold_cmd = 'source /usr/local/bin/openbmc-utils.sh;set_hwmon_threshold 26 58 in1_max'
-		elif num == 2:
-			cmd = 'i2cget -f -y 25 0x58 0xd8'
-			min_threshold_cmd = 'source /usr/local/bin/openbmc-utils.sh;set_hwmon_threshold 25 58 in1_min'
-			max_threshold_cmd = 'source /usr/local/bin/openbmc-utils.sh;set_hwmon_threshold 25 58 in1_max'
-		elif num == 3:
+		if self.name == 'dps1100-i2c-24-58':
 			cmd = 'i2cget -f -y 24 0x58 0xd8'
-			min_threshold_cmd = 'source /usr/local/bin/openbmc-utils.sh;set_hwmon_threshold 24 58 in1_min'
-			max_threshold_cmd = 'source /usr/local/bin/openbmc-utils.sh;set_hwmon_threshold 24 58 in1_max'
+		else:
+			cmd = 'i2cget -f -y 25 0x59 0xd8'
 		sys.stdout.flush()
 		recv = os.popen(cmd).read()
 		if recv.strip() == '0x00':
 			if self.power_type != 1:
-				syslog.syslog(syslog.LOG_WARNING, 'PSU' + psu_rename(num + 1) + ' input type is AC')
+				syslog.syslog(syslog.LOG_WARNING, 'PSU' + str(num + 1) + ' input type is AC')
 				self.power_type = 1
-				min_threshold_cmd += ' 90000'
-				max_threshold_cmd += ' 264000'
+				if self.name == 'dps1100-i2c-24-58':
+					cmd = 'source /usr/local/bin/openbmc-utils.sh;set_hwmon_threshold 24 58 in1_min 90000'
+				else:
+					cmd = 'source /usr/local/bin/openbmc-utils.sh;set_hwmon_threshold 25 59 in1_min 90000'
 				sys.stdout.flush()
-				recv = os.popen(min_threshold_cmd).read()
+				recv = os.popen(cmd).read()
+				if self.name == 'dps1100-i2c-24-58':
+					cmd = 'source /usr/local/bin/openbmc-utils.sh;set_hwmon_threshold 24 58 in1_max 264000'
+				else:
+					cmd = 'source /usr/local/bin/openbmc-utils.sh;set_hwmon_threshold 25 59 in1_max 264000'
 				sys.stdout.flush()
-				recv = os.popen(max_threshold_cmd).read()
+				recv = os.popen(cmd).read()
 				update_psu_threshold(num)
 		elif recv.strip() == '0x01':
 			if self.power_type != 2:
-				syslog.syslog(syslog.LOG_WARNING, 'PSU' + psu_rename(num + 1) + ' input type is DC')
+				syslog.syslog(syslog.LOG_WARNING, 'PSU' + str(num + 1) + ' input type is DC')
 				self.power_type = 2
-				min_threshold_cmd += ' 200000'
-				max_threshold_cmd += ' 280000'
+				if self.name == 'dps1100-i2c-24-58':
+					cmd = 'source /usr/local/bin/openbmc-utils.sh;set_hwmon_threshold 24 58 in1_min 200000'
+				else:
+					cmd = 'source /usr/local/bin/openbmc-utils.sh;set_hwmon_threshold 25 59 in1_min 200000'
 				sys.stdout.flush()
-				recv = os.popen(min_threshold_cmd).read()
+				recv = os.popen(cmd).read()
+				if self.name == 'dps1100-i2c-24-58':
+					cmd = 'source /usr/local/bin/openbmc-utils.sh;set_hwmon_threshold 24 58 in1_max 280000'
+				else:
+					cmd = 'source /usr/local/bin/openbmc-utils.sh;set_hwmon_threshold 25 59 in1_max 280000'
 				sys.stdout.flush()
-				recv = os.popen(max_threshold_cmd).read()
+				recv = os.popen(cmd).read()
 				update_psu_threshold(num)
 		else:
 			if self.power_type != 0:
-				syslog.syslog(syslog.LOG_ERR, 'PSU' + psu_rename(num + 1) + ' input type is UNKNOWN')
+				syslog.syslog(syslog.LOG_ERR, 'PSU' + str(num + 1) + ' input type is UNKNOWN')
 				self.power_type = 0
-				min_threshold_cmd += ' 90000'
-				max_threshold_cmd += ' 264000'
+				if self.name == 'dps1100-i2c-24-58':
+					cmd = 'source /usr/local/bin/openbmc-utils.sh;set_hwmon_threshold 24 58 in1_min 90000'
+				else:
+					cmd = 'source /usr/local/bin/openbmc-utils.sh;set_hwmon_threshold 25 59 in1_min 90000'
 				sys.stdout.flush()
-				recv = os.popen(min_threshold_cmd).read()
+				recv = os.popen(cmd).read()
+				if self.name == 'dps1100-i2c-24-58':
+					cmd = 'source /usr/local/bin/openbmc-utils.sh;set_hwmon_threshold 24 58 in1_max 264000'
+				else:
+					cmd = 'source /usr/local/bin/openbmc-utils.sh;set_hwmon_threshold 25 59 in1_max 264000'
 				sys.stdout.flush()
-				recv = os.popen(max_threshold_cmd).read()
+				recv = os.popen(cmd).read()
 				update_psu_threshold(num)
 
 
@@ -366,7 +357,7 @@ def psu_init(item):
 	i = 0
 	for i in range(PSU_NUM):
 		psu_obj[i] = PSU_Obj(item[i + 1])
-		psu_obj[i].get_psu_present(i)
+		psu_obj[i].get_psu_present()
 		if psu_obj[i].present == 0:
 			continue
 		psu_obj[i].get_psu_power_ok(i)
@@ -431,7 +422,7 @@ def update_psu_threshold(i):
 def psu_reinit():
 	i = 0
 	for i in range(PSU_NUM):
-		psu_obj[i].get_psu_present(i)
+		psu_obj[i].get_psu_present()
 		if psu_obj[i].present == 0:
 			continue
 		psu_obj[i].get_psu_power_ok(i)
@@ -441,14 +432,6 @@ def psu_reinit():
 		psu_obj[i].get_psu_ac_ok(i)
 		psu_obj[i].get_psu_power_type(i)
 
-def psu_rename(num):
-	psu_name = {
-		1 : '1',
-		2 : '2',
-		3 : '3',
-		4 : '4'
-	}
-	return psu_name.get(num, None)
 
 def psu_monitor(item):
 	i = 0
