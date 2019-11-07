@@ -22,7 +22,7 @@ SRC_URI += " \
     file://rest-api-1/rest_raw.py \
     file://rest-api-1/rest_temp.py \
     file://rest-api-1/rest_syslog.py \
-    file://rest-api-1/rest_watchdog.py \
+    file://rest-api-1/rest_wdt.py \
     file://rest-api-1/rest_userpassword.py \
     file://rest-api-1/rest_upgrade.py \
     file://board_endpoint.py \
@@ -43,7 +43,7 @@ binfiles1 += " \
     rest_raw.py \
     rest_temp.py \
     rest_syslog.py \
-    rest_watchdog.py \
+    rest_wdt.py \
     rest_userpassword.py \
     rest_upgrade.py \
     "
