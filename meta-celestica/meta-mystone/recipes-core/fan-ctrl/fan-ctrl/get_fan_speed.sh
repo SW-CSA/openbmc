@@ -23,7 +23,7 @@ PATH=/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/bin
 . /usr/local/bin/openbmc-utils.sh
 
 board_type=$(board_type)
-FAN_TOTAL=5
+FAN_TOTAL=4
 
 usage() {
    	echo "Usage: $0 [Fan Unit (1..$FAN_TOTAL)]" >&2
@@ -54,7 +54,7 @@ set -e
 # refer to the comments in init_pwn.sh regarding
 # the fan unit and tacho mapping
 if [ "$#" -eq 0 ]; then
-   	FANS="1 2 3 4 5"
+   	FANS="1 2 3 4"
 elif [ "$#" -eq 1 ]; then
     if [ $1 -gt $FAN_TOTAL ]; then
         usage

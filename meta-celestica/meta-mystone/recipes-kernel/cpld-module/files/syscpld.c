@@ -166,7 +166,528 @@ static ssize_t sys_alarm_store(struct device *dev,
 }
 
 static i2c_dev_data_st syscpld_data;
-static const i2c_dev_attr_st syscpld_attr_table_ivystone[] = {
+static const i2c_dev_attr_st syscpld_attr_table_fishbone[] = {
+	{
+	  "version",
+	  NULL,
+	  I2C_DEV_ATTR_SHOW_DEFAULT,
+	  NULL,
+	  0x0, 0, 8,
+	},
+	{
+	  "scratch",
+	  NULL,
+	  I2C_DEV_ATTR_SHOW_DEFAULT,
+	  I2C_DEV_ATTR_STORE_DEFAULT,
+	  0x1, 0, 8,
+	},
+	{
+	  "hardware_version",
+	  NULL,
+	  I2C_DEV_ATTR_SHOW_DEFAULT,
+	  NULL,
+	  0x2, 0, 2,
+	},
+	{
+		"sw_brd_type",
+		"Indicate the board type\n"
+		"0x00: fishbone32\n"
+		"0x01: fishbone48",
+		I2C_DEV_ATTR_SHOW_DEFAULT,
+		NULL,
+		0x3, 0, 2,
+	},
+	{
+	  "sb_reset",
+	  "switch board reset control:\n"
+	  "0x0: reset\n"
+	  "0x1 not reset",
+	  I2C_DEV_ATTR_SHOW_DEFAULT,
+	  I2C_DEV_ATTR_STORE_DEFAULT,
+	  0x4, 0, 1,
+	},
+	{
+	  "i210_reset",
+	  "I210 reset control:\n"
+	  "0x0: reset\n"
+	  "0x1 not reset",
+	  I2C_DEV_ATTR_SHOW_DEFAULT,
+	  I2C_DEV_ATTR_STORE_DEFAULT,
+	  0x4, 1, 1,
+	},
+	{
+	  "pca9548_reset",
+	  "PCA9548 reset control:\n"
+	  "0x0: reset\n"
+	  "0x1 not reset",
+	  I2C_DEV_ATTR_SHOW_DEFAULT,
+	  I2C_DEV_ATTR_STORE_DEFAULT,
+	  0x4, 2, 1,
+	},
+	{
+	  "fan_cpld_reset",
+	  "FAN CPLD reset control:\n"
+	  "0x0: reset\n"
+	  "0x1 not reset",
+	  I2C_DEV_ATTR_SHOW_DEFAULT,
+	  I2C_DEV_ATTR_STORE_DEFAULT,
+	  0x4, 3, 1,
+	},
+	{
+	  "bmc_reset",
+	  "BMC reset control:\n"
+	  "0x0: reset\n"
+	  "0x1 not reset",
+	  I2C_DEV_ATTR_SHOW_DEFAULT,
+	  I2C_DEV_ATTR_STORE_DEFAULT,
+	  0x4, 4, 1,
+	},
+	{
+	  "bcm5387_reset",
+	  "BCM5387 reset control:\n"
+	  "0x0: reset\n"
+	  "0x1 not reset",
+	  I2C_DEV_ATTR_SHOW_DEFAULT,
+	  I2C_DEV_ATTR_STORE_DEFAULT,
+	  0x4, 5, 1,
+	},
+	{
+	  "tpm_reset",
+	  "TPM reset control:\n"
+	  "0x0: reset\n"
+	  "0x1 not reset",
+	  I2C_DEV_ATTR_SHOW_DEFAULT,
+	  I2C_DEV_ATTR_STORE_DEFAULT,
+	  0x4, 6, 1,
+	},
+	{
+	  "come_rst_st",
+	  "0x11: power on reset\n"
+	  "0x22: software trigger CPU to warm reset\n"
+	  "0x33: software trigger CPU to cold reset\n"
+	  "0x44: CPU warm reset\n"
+	  "0x55: CPU cold reset\n"
+	  "0x66: watchdog reset\n"
+	  "0x77: power cycle",
+	  I2C_DEV_ATTR_SHOW_DEFAULT,
+	  NULL,
+	  0x6, 0, 8,
+	},
+	{
+	  "usb_iso_en",
+	  "0x0: enable\n"
+	  "0x1: disable",
+	  I2C_DEV_ATTR_SHOW_DEFAULT,
+	  I2C_DEV_ATTR_STORE_DEFAULT,
+	  0xa, 0, 1,
+	},
+	{
+	  "usb_front_oc",
+	  NULL,
+	  I2C_DEV_ATTR_SHOW_DEFAULT,
+	  NULL,
+	  0xb, 0, 1,
+	},
+	{
+	  "tps2051_oc",
+	  NULL,
+	  I2C_DEV_ATTR_SHOW_DEFAULT,
+	  NULL,
+	  0xb, 1, 1,
+	},
+	{
+	  "sol_control",
+	  "0x0: switch to BMC\n"
+	  "0x1: switch to COMe",
+	  I2C_DEV_ATTR_SHOW_DEFAULT,
+	  I2C_DEV_ATTR_STORE_DEFAULT,
+	  0xc, 0, 1,
+	},
+	{
+	  "cpu_int_status",
+	  "0x0: interrupt\n"
+	  "0x1: no interrupt",
+	  I2C_DEV_ATTR_SHOW_DEFAULT,
+	  NULL,
+	  0x10, 0, 1,
+	},
+	{
+	  "bmc_int_status",
+	  "0x0: interrupt\n"
+	  "0x1: no interrupt",
+	  I2C_DEV_ATTR_SHOW_DEFAULT,
+	  NULL,
+	  0x10, 1, 1,
+	},
+	{
+	  "sw_lm75_int_status",
+	  "0x0: interrupt\n"
+	  "0x1: no interrupt",
+	  I2C_DEV_ATTR_SHOW_DEFAULT,
+	  NULL,
+	  0x11, 0, 1,
+	},
+	{
+	  "i210_wake_int_status",
+	  "0x0: interrupt\n"
+	  "0x1: no interrupt",
+	  I2C_DEV_ATTR_SHOW_DEFAULT,
+	  NULL,
+	  0x11, 1, 1,
+	},
+	{
+	  "psu1_int",
+	  "0x0: interrupt\n"
+	  "0x1: no interrupt",
+	  I2C_DEV_ATTR_SHOW_DEFAULT,
+	  NULL,
+	  0x11, 2, 1,
+	},
+	{
+	  "psu2_int",
+	  "0x0: interrupt\n"
+	  "0x1: no interrupt",
+	  I2C_DEV_ATTR_SHOW_DEFAULT,
+	  NULL,
+	  0x11, 3, 1,
+	},
+	{
+	  "bmc_54616s_int_status",
+	  "0x0: interrupt\n"
+	  "0x1: no interrupt",
+	  I2C_DEV_ATTR_SHOW_DEFAULT,
+	  NULL,
+	  0x11, 4, 1,
+	},
+	{
+	  "gbe_54616s_int_status",
+	  "0x0: interrupt\n"
+	  "0x1: no interrupt",
+	  I2C_DEV_ATTR_SHOW_DEFAULT,
+	  NULL,
+	  0x11, 5, 1,
+	},
+	{
+	  "gbe_54616s_b_int_status",
+	  "0x0: interrupt\n"
+	  "0x1: no interrupt",
+	  I2C_DEV_ATTR_SHOW_DEFAULT,
+	  NULL,
+	  0x11, 6, 1,
+	},
+	{
+	  "pwr_come_en",
+	  "0x0: COMe power is off\n"
+	  "0x1: COMe power is on",
+	  I2C_DEV_ATTR_SHOW_DEFAULT,
+	  I2C_DEV_ATTR_STORE_DEFAULT,
+	  0x20, 0, 1,
+	},
+	{
+	  "come_rst_n",
+	  "0x0: trigger COMe reset\n"
+	  "0x1: normal",
+	  I2C_DEV_ATTR_SHOW_DEFAULT,
+	  I2C_DEV_ATTR_STORE_DEFAULT,
+	  0x21, 0, 1,
+	},
+	{
+	  "come_status",
+	  "0x1: SUS_S3_N\n"
+	  "0x2: SUS_S4_N\n"
+	  "0x4: SUS_S5_N\n"
+	  "0x8: SUS_STAT_N",
+	  I2C_DEV_ATTR_SHOW_DEFAULT,
+	  NULL,
+	  0x22, 0, 4,
+	},
+	{
+	  "bios_cs",
+	  "0x1: select BIOS0\n"
+	  "0x3: select BIOS1",
+	  I2C_DEV_ATTR_SHOW_DEFAULT,
+	  I2C_DEV_ATTR_STORE_DEFAULT,
+	  0x23, 0, 2,
+	},
+	{
+	  "bios_ctrl",
+	  "0x0: connect to CPU, control by software\n"
+	  "0x1: disable connect to CPU, control by CPLD\n"
+	  "0x2: connect to BMC, control by software",
+	  I2C_DEV_ATTR_SHOW_DEFAULT,
+	  I2C_DEV_ATTR_STORE_DEFAULT,
+	  0x23, 4, 2,
+	},
+	{
+	  "cb_pwr_btn_n",
+	  NULL,
+	  I2C_DEV_ATTR_SHOW_DEFAULT,
+	  I2C_DEV_ATTR_STORE_DEFAULT,
+	  0x24, 0, 1,
+	},
+	{
+	  "cb_type_n",
+	  NULL,
+	  I2C_DEV_ATTR_SHOW_DEFAULT,
+	  NULL,
+	  0x25, 0, 3,
+	},
+	{
+	  "switch_power_f",
+	  "0x1: force to switch card power off\n"
+	  "0x2: force to switch card power on",
+	  I2C_DEV_ATTR_SHOW_DEFAULT,
+	  I2C_DEV_ATTR_STORE_DEFAULT,
+	  0x26, 0, 2,
+	},
+	{
+	  "cb_rst_n",
+	  NULL,
+	  I2C_DEV_ATTR_SHOW_DEFAULT,
+	  I2C_DEV_ATTR_STORE_DEFAULT,
+	  0x27, 0, 1,
+	},
+	{
+	  "bios_spi_wp0_n",
+	  NULL,
+	  I2C_DEV_ATTR_SHOW_DEFAULT,
+	  I2C_DEV_ATTR_STORE_DEFAULT,
+	  0x31, 0, 1,
+	},
+	{
+	  "bios_spi_wp1_n",
+	  NULL,
+	  I2C_DEV_ATTR_SHOW_DEFAULT,
+	  I2C_DEV_ATTR_STORE_DEFAULT,
+	  0x31, 1, 1,
+	},
+	{
+	  "tlv_eeprom_wp",
+	  NULL,
+	  I2C_DEV_ATTR_SHOW_DEFAULT,
+	  I2C_DEV_ATTR_STORE_DEFAULT,
+	  0x31, 2, 1,
+	},
+	{
+	  "sys_eeprom_wp",
+	  NULL,
+	  I2C_DEV_ATTR_SHOW_DEFAULT,
+	  I2C_DEV_ATTR_STORE_DEFAULT,
+	  0x31, 3, 1,
+	},
+	{
+	  "fru_eeprom_wp",
+	  NULL,
+	  I2C_DEV_ATTR_SHOW_DEFAULT,
+	  I2C_DEV_ATTR_STORE_DEFAULT,
+	  0x31, 4, 1,
+	},
+	{
+	  "psu_r_en",
+	  NULL,
+	  I2C_DEV_ATTR_SHOW_DEFAULT,
+	  I2C_DEV_ATTR_STORE_DEFAULT,
+	  0x5f, 0, 1,
+	},
+	{
+	  "psu_l_en",
+	  NULL,
+	  I2C_DEV_ATTR_SHOW_DEFAULT,
+	  I2C_DEV_ATTR_STORE_DEFAULT,
+	  0x5f, 1, 1,
+	},
+	{
+	  "psu_r_status",
+	  "0x0: not OK\n"
+	  "0x1: OK",
+	  I2C_DEV_ATTR_SHOW_DEFAULT,
+	  NULL,
+	  0x60, 0, 1,
+	},
+	{
+	  "psu_l_status",
+	  "0x0: not OK\n"
+	  "0x1: OK",
+	  I2C_DEV_ATTR_SHOW_DEFAULT,
+	  NULL,
+	  0x60, 1, 1,
+	},
+	{
+	  "psu_r_present",
+	  "0x0: present\n"
+	  "0x1: absent",
+	  I2C_DEV_ATTR_SHOW_DEFAULT,
+	  NULL,
+	  0x60, 2, 1,
+	},
+	{
+	  "psu_l_present",
+	  "0x0: present\n"
+	  "0x1: absent",
+	  I2C_DEV_ATTR_SHOW_DEFAULT,
+	  NULL,
+	  0x60, 3, 1,
+	},
+	{
+	  "psu_r_int_status",
+	  "0x0: interrupt\n"
+	  "0x1: no interrupt",
+	  I2C_DEV_ATTR_SHOW_DEFAULT,
+	  NULL,
+	  0x60, 4, 1,
+	},
+	{
+	  "psu_l_int_status",
+	  "0x0: interrupt\n"
+	  "0x1: no interrupt",
+	  I2C_DEV_ATTR_SHOW_DEFAULT,
+	  NULL,
+	  0x60, 5, 1,
+	},
+	{
+	  "psu_r_ac_status",
+	  "0x0: not OK\n"
+	  "0x1: OK",
+	  I2C_DEV_ATTR_SHOW_DEFAULT,
+	  NULL,
+	  0x60, 6, 1,
+	},
+	{
+	  "psu_l_ac_status",
+	  "0x0: not OK\n"
+	  "0x1: OK",
+	  I2C_DEV_ATTR_SHOW_DEFAULT,
+	  NULL,
+	  0x60, 7, 1,
+	},
+	{
+	  "psu_l_led_ctrl_en",
+	  "0x0: disable\n"
+	  "0x1: enable",
+	  I2C_DEV_ATTR_SHOW_DEFAULT,
+	  I2C_DEV_ATTR_STORE_DEFAULT,
+	  0x61, 0, 1,
+	},
+	{
+	  "psu_r_led_ctrl_en",
+	  "0x0: disable\n"
+	  "0x1: enable",
+	  I2C_DEV_ATTR_SHOW_DEFAULT,
+	  I2C_DEV_ATTR_STORE_DEFAULT,
+	  0x61, 1, 1,
+	},
+	{
+	  "sysled_ctrl",
+	  "0x0: on\n"
+	  "0x1: 1HZ blink\n"
+	  "0x2: 4HZ blink\n"
+	  "0x3: off",
+	  I2C_DEV_ATTR_SHOW_DEFAULT,
+	  I2C_DEV_ATTR_STORE_DEFAULT,
+	  0x62, 0, 2,
+	},
+	{
+	  "sysled_select",
+	  "0x0:  green and yellow alternate blink\n"
+	  "0x1: green\n"
+	  "0x2: yellow\n"
+	  "0x3: off",
+	  I2C_DEV_ATTR_SHOW_DEFAULT,
+	  I2C_DEV_ATTR_STORE_DEFAULT,
+	  0x62, 4, 2,
+	},
+	{
+	  "fan_led_ctrl_en",
+	  "0x0: disable\n"
+	  "0x1: enable\n",
+	  I2C_DEV_ATTR_SHOW_DEFAULT,
+	  I2C_DEV_ATTR_STORE_DEFAULT,
+	  0x63, 0, 1,
+	},
+	{
+	  "pwr_cycle",
+	  "0x0: enable\n"
+	  "0x1: disable",
+	  I2C_DEV_ATTR_SHOW_DEFAULT,
+	  I2C_DEV_ATTR_STORE_DEFAULT,
+	  0x64, 0, 1,
+	},
+	{
+	  "bios_boot_ok",
+	  "0x0: not ok\n"
+	  "0x1: ok",
+	  I2C_DEV_ATTR_SHOW_DEFAULT,
+	  NULL,
+	  0x70, 0, 1,
+	},
+	{
+	  "bios_boot_cs",
+	  "0x0: from BIOS0\n"
+	  "0x1: from BIOS1",
+	  I2C_DEV_ATTR_SHOW_DEFAULT,
+	  NULL,
+	  0x70, 1, 1,
+	},
+	{
+	  "boot_counter",
+	  NULL,
+	  NULL,
+	  I2C_DEV_ATTR_STORE_DEFAULT,
+	  0x71, 0, 8,
+	},
+	{
+	  "thermal_shutdown_en",
+	  "0x0: disable\n"
+	  "0x1: enable",
+	  I2C_DEV_ATTR_SHOW_DEFAULT,
+	  I2C_DEV_ATTR_STORE_DEFAULT,
+	  0x75, 0, 1,
+	},
+	{
+	  "temp1_input",
+	  "Switch chip Temperature",
+	  switch_temp_show,
+	  I2C_DEV_ATTR_STORE_DEFAULT,
+	  0x7A, 0, 8,
+	},
+	{
+	  "temp1_max",
+	  "Switch chip Temperature",
+	  sys_alarm_show,
+	  sys_alarm_store,
+	  SYSCPLD_ALARM_NODE, 0, 8,
+	},
+	{
+	  "temp1_max_hyst",
+	  "Switch chip Temperature",
+	  sys_alarm_show,
+	  sys_alarm_store,
+	  SYSCPLD_ALARM_NODE, 0, 8,
+	},
+	{
+	  "temp2_input",
+	  "CPU chip Temperature",
+	  sys_alarm_show,
+	  sys_alarm_store,
+	  SYSCPLD_ALARM_NODE, 0, 8,
+	},
+	{
+	  "temp2_max",
+	  "CPU chip Temperature",
+	  sys_alarm_show,
+	  sys_alarm_store,
+	  SYSCPLD_ALARM_NODE, 0, 8,
+	},
+	{
+	  "temp2_max_hyst",
+	  "CPU chip Temperature",
+	  sys_alarm_show,
+	  sys_alarm_store,
+	  SYSCPLD_ALARM_NODE, 0, 8,
+	},
+};
+
+static const i2c_dev_attr_st syscpld_attr_table_phalanx[] = {
 	{
 	  "version",
 	  NULL,
@@ -782,9 +1303,13 @@ static int syscpld_probe(struct i2c_client *client,
     //check board type then add different file nodes
     board_type = i2c_smbus_read_byte_data(syscpld_client, 0x2);
     if(board_type >= 1) {
-        printk(KERN_INFO "Ivystone CPLD driver loading\n");
-        n_attrs = sizeof(syscpld_attr_table_ivystone) / sizeof(syscpld_attr_table_ivystone[0]);
-        syscpld_attr_table = syscpld_attr_table_ivystone;
+        printk(KERN_INFO "Phalanx CPLD driver loading\n");
+        n_attrs = sizeof(syscpld_attr_table_phalanx) / sizeof(syscpld_attr_table_phalanx[0]);
+        syscpld_attr_table = syscpld_attr_table_phalanx;
+    } else {
+        printk(KERN_INFO "Fishbone CPLD driver loading\n");
+        n_attrs = sizeof(syscpld_attr_table_fishbone) / sizeof(syscpld_attr_table_fishbone[0]);
+        syscpld_attr_table = syscpld_attr_table_fishbone;
     }
 	
 	return i2c_dev_sysfs_data_init(client, &syscpld_data, syscpld_attr_table, n_attrs);
@@ -868,10 +1393,10 @@ int reset_i2c_mux(int bus)
 	if(bus == 2) {
 		reg_val2 &= ~(0x1 << 1); //connect to FRU
 	} else if(bus == 4) {
-		if(board_type >= 1) //ivystone
+		if(board_type >= 1) //Phalanx
 			reg_val2 &= ~(0x1 << 3); //connect to power chip
 	} else if(bus == 6) {
-		if(board_type >= 1) //ivystone
+		if(board_type >= 1) //Phalanx
 			reg_val2 &= ~(0x1 << 0);
 		else
 			reg_val1 &= ~(0x1 << 2); //connect to PSU

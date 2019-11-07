@@ -53,21 +53,20 @@
 
 //#define DEBUG
 //#define FOR_F2B
-#define FANCTRL_SIMULATION 0
-#define SENSOR_LOST_SIMULATION 0
+//#define FANCTRL_SIMULATION 1
 //#define CONFIG_PSU_FAN_CONTROL_INDEPENDENT 1
 #define CONFIG_FSC_CONTROL_PID 1 //for PID control
 
-#define TOTAL_FANS 5
-#define TOTAL_PSUS 4
+#define TOTAL_FANS 4
+#define TOTAL_PSUS 2
 #define FAN_MEDIUM 128
 #define FAN_HIGH 100
 #define FAN_MAX 255
-#define FAN_MIN 115
-#define FAN_NORMAL_MAX FAN_MAX
+#define FAN_MIN 76
+#define FAN_NORMAL_MAX 178
 #define FAN_NORMAL_MIN FAN_MIN
 #define FAN_ONE_FAIL_MAX FAN_MAX
-#define FAN_ONE_FAIL_MIN FAN_MAX
+#define FAN_ONE_FAIL_MIN 153
 #define RAISING_TEMP_LOW 25
 #define RAISING_TEMP_HIGH 40
 #define FALLING_TEMP_LOW 23
@@ -97,8 +96,8 @@
 
 #define FAN_FAIL_COUNT 9
 #define FAN_FAIL_RPM 1000
-#define FAN_FRONTT_SPEED_MAX 18000
-#define FAN_REAR_SPEED_MAX 18000
+#define FAN_FRONTT_SPEED_MAX 24150
+#define FAN_REAR_SPEED_MAX 28950
 #define PSU_SPEED_MAX 26496
 
 #define THERMAL_DIRECTION_PATH "/sys/bus/i2c/devices/2-0057/eeprom"
@@ -106,10 +105,10 @@
 #define FAN_DIR_FAULT 0
 #define FAN_DIR_B2F 1
 #define FAN_DIR_F2B 2
-#define THERMAL_DIR_F2B_STR "R1240-F0001"
-#define THERMAL_DIR_B2F_STR "R1240-F0002"
-#define FAN_DIR_F2B_STR "R1240-G0009"
-#define FAN_DIR_B2F_STR "R1240-G0009"
+#define THERMAL_DIR_F2B_STR "R1241-F0001"
+#define THERMAL_DIR_B2F_STR "R1241-F0002"
+#define FAN_DIR_F2B_STR "R1241-F9001"
+#define FAN_DIR_B2F_STR "R1241-F9002"
 #define DELTA_PSU_DIR_F2B_STR "DPS-1100FB"
 #define DELTA_PSU_DIR_B2F_STR "DPS-1100AB"
 #define ACBEL_PSU_DIR_F2B_STR "FSJ026-A20G"
@@ -120,10 +119,8 @@
 #define FAN_WDT_TIME (0x3c) //5 * 60
 #define FAN_WDT_ENABLE_SYSFS "/sys/bus/i2c/devices/i2c-8/8-000d/wdt_en"
 #define FAN_WDT_TIME_SYSFS "/sys/bus/i2c/devices/i2c-8/8-000d/wdt_time"
-#define PSU1_SHUTDOWN_SYSFS "/sys/bus/i2c/devices/i2c-27/25-0058/control/shutdown"
-#define PSU2_SHUTDOWN_SYSFS "/sys/bus/i2c/devices/i2c-26/26-0058/control/shutdown"
-#define PSU3_SHUTDOWN_SYSFS "/sys/bus/i2c/devices/i2c-25/28-0058/control/shutdown"
-#define PSU4_SHUTDOWN_SYSFS "/sys/bus/i2c/devices/i2c-24/29-0058/control/shutdown"
+#define PSU1_SHUTDOWN_SYSFS "/sys/bus/i2c/devices/i2c-24/24-0058/control/shutdown"
+#define PSU2_SHUTDOWN_SYSFS "/sys/bus/i2c/devices/i2c-25/25-0059/control/shutdown"
 #define PSU_SPEED_CTRL_NODE "fan1_cfg"
 #define PSU_SPEED_CTRL_ENABLE 0x90
 
@@ -141,7 +138,7 @@
 #define NORMAL_K	((float)(FAN_NORMAL_MAX - FAN_NORMAL_MIN) / (RAISING_TEMP_HIGH - RAISING_TEMP_LOW))
 #define ONE_FAIL_K	((float)(FAN_ONE_FAIL_MAX - FAN_ONE_FAIL_MIN) / (RAISING_TEMP_HIGH - RAISING_TEMP_LOW))
 
-struct line_policy ivystone_f2b_normal = {
+struct line_policy fishbone48_f2b_normal = {
 	.temp_hyst = CRITICAL_TEMP_HYST,
 	.begin = {
 		.temp = RAISING_TEMP_LOW,
@@ -154,7 +151,7 @@ struct line_policy ivystone_f2b_normal = {
 	.get_speed = calculate_line_speed,
 };
 
-struct line_policy ivystone_f2b_onefail = {
+struct line_policy fishbone48_f2b_onefail = {
 	.temp_hyst = CRITICAL_TEMP_HYST,
 	.begin = {
 		.temp = RAISING_TEMP_LOW,
@@ -167,7 +164,7 @@ struct line_policy ivystone_f2b_onefail = {
 	.get_speed = calculate_line_speed,
 };
 
-struct line_policy ivystone_b2f_normal = {
+struct line_policy fishbone48_b2f_normal = {
 	.temp_hyst = CRITICAL_TEMP_HYST,
 	.begin = {
 		.temp = RAISING_TEMP_LOW,
@@ -180,7 +177,7 @@ struct line_policy ivystone_b2f_normal = {
 	.get_speed = calculate_line_speed,
 };
 
-struct line_policy ivystone_b2f_onefail = {
+struct line_policy fishbone48_b2f_onefail = {
 	.temp_hyst = CRITICAL_TEMP_HYST,
 	.begin = {
 		.temp = RAISING_TEMP_LOW,
@@ -200,8 +197,8 @@ static int read_temp_sysfs(struct sensor_info_sysfs *sensor);
 static int read_temp_directly_sysfs(struct sensor_info_sysfs *sensor);
 
 
-static struct sensor_info_sysfs linecard1_onboard_u25 = {
-  .prefix = "/sys/bus/i2c/drivers/lm75/42-0049",
+static struct sensor_info_sysfs sensor_inlet_u17_critical_info = {
+  .prefix = "/sys/bus/i2c/drivers/lm75/39-0049",
   .suffix = "temp1_input",
   .error_cnt = 0,
   .temp = 0,
@@ -217,8 +214,8 @@ static struct sensor_info_sysfs linecard1_onboard_u25 = {
   .read_sysfs = &read_temp_sysfs,
 };
 
-static struct sensor_info_sysfs linecard1_onboard_u26 = {
-  .prefix = "/sys/bus/i2c/drivers/lm75/42-0048",
+static struct sensor_info_sysfs sensor_inlet_u52_critical_info = {
+  .prefix = "/sys/bus/i2c/drivers/lm75/39-0048",
   .suffix = "temp1_input",
   .error_cnt = 0,
   .temp = 0,
@@ -234,8 +231,8 @@ static struct sensor_info_sysfs linecard1_onboard_u26 = {
   .read_sysfs = &read_temp_sysfs,
 };
 
-static struct sensor_info_sysfs linecard2_onboard_u25 = {
-  .prefix = "/sys/bus/i2c/drivers/lm75/43-0049",
+static struct sensor_info_sysfs sensor_bcm5870_board_u31_critical_info = {
+  .prefix = "/sys/bus/i2c/drivers/lm75/7-004a",
   .suffix = "temp1_input",
   .error_cnt = 0,
   .temp = 0,
@@ -251,24 +248,8 @@ static struct sensor_info_sysfs linecard2_onboard_u25 = {
   .read_sysfs = &read_temp_sysfs,
 };
 
-static struct sensor_info_sysfs linecard2_onboard_u26 = {
-  .prefix = "/sys/bus/i2c/drivers/lm75/43-0048",
-  .suffix = "temp1_input",
-  .error_cnt = 0,
-  .temp = 0,
-  .t1 = 0,
-  .t2 = 0,
-  .old_pwm = 0,
-  .setpoint = 0,
-  .p = 0,
-  .i = 0,
-  .d = 0,
-  .min_output = FAN_MIN,
-  .max_output = FAN_MAX,
-  .read_sysfs = &read_temp_sysfs,
-};
 
-static struct sensor_info_sysfs switchboard_onboard_u33 = {
+static struct sensor_info_sysfs sensor_inlet_u28_critical_info = {
   .prefix = "/sys/bus/i2c/drivers/lm75/7-004d",
   .suffix = "temp1_input",
   .error_cnt = 0,
@@ -285,171 +266,120 @@ static struct sensor_info_sysfs switchboard_onboard_u33 = {
   .read_sysfs = &read_temp_sysfs,
 };
 
-static struct sensor_info_sysfs switchboard_onboard_u148 = {
-  .prefix = "/sys/bus/i2c/drivers/max31730/7-004c",
+static struct sensor_info_sysfs sensor_inlet_u29_critical_info = {
+  .prefix = "/sys/bus/i2c/drivers/lm75/7-004c",
+  .suffix = "temp1_input",
+  .error_cnt = 0,
+  .temp = 0,
+  .t1 = 0,
+  .t2 = 0,
+  .old_pwm = 0,
+  .setpoint = 0,
+  .p = 0,
+  .i = 0,
+  .d = 0,
+  .min_output = FAN_MIN,
+  .max_output = FAN_MAX,
+  .read_sysfs = &read_temp_sysfs,
+};
+
+static struct sensor_info_sysfs sensor_bcm5870_board_u30_critical_info = {
+  .prefix = "/sys/bus/i2c/drivers/lm75/7-004b",
+  .suffix = "temp1_input",
+  .error_cnt = 0,
+  .temp = 0,
+  .t1 = 0,
+  .t2 = 0,
+  .old_pwm = 0,
+  .setpoint = 0,
+  .p = 0,
+  .i = 0,
+  .d = 0,
+  .min_output = FAN_MIN,
+  .max_output = FAN_MAX,
+  .read_sysfs = &read_temp_sysfs,
+};
+
+static struct sensor_info_sysfs sensor_bcm5870_inlet_critical_info_f2b = {
+  .prefix = "/sys/bus/i2c/devices/i2c-0/0-000d",
+  .suffix = "temp1_input",
+  .error_cnt = 0,
+  .temp = 0,
+  .t1 = 0,
+  .t2 = 0,
+  .old_pwm = 0,
+  .setpoint = 95,
+  .p = 3,
+  .i = 0.3,
+  .d = 0.3,
+  .min_output = FAN_MIN,
+  .max_output = FAN_MAX,
+  .read_sysfs = &read_temp_directly_sysfs,
+};
+
+static struct sensor_info_sysfs sensor_bcm5870_inlet_critical_info_b2f = {
+  .prefix = "/sys/bus/i2c/devices/i2c-0/0-000d",
+  .suffix = "temp1_input",
+  .error_cnt = 0,
+  .temp = 0,
+  .t1 = 0,
+  .t2 = 0,
+  .old_pwm = 0,
+  .setpoint = 95,
+  .p = 3,
+  .i = 0.5,
+  .d = 0.5,
+  .min_output = FAN_MIN,
+  .max_output = FAN_MAX,
+  .read_sysfs = &read_temp_directly_sysfs,
+};
+
+static struct sensor_info_sysfs sensor_cpu_inlet_critical_info_f2b = {
+  .prefix = "/sys/bus/i2c/devices/i2c-0/0-000d",
+  .suffix = "temp2_input",
+  .error_cnt = 0,
+  .temp = 0,
+  .t1 = 0,
+  .t2 = 0,
+  .old_pwm = 0,
+  .setpoint = -15,
+  .p = 2,
+  .i = 0.5,
+  .d = 0.5,
+  .min_output = FAN_MIN,
+  .max_output = FAN_MAX,
+  .read_sysfs = &read_temp_directly_sysfs,
+};
+
+static struct sensor_info_sysfs sensor_cpu_inlet_critical_info_b2f = {
+  .prefix = "/sys/bus/i2c/devices/i2c-0/0-000d",
+  .suffix = "temp2_input",
+  .error_cnt = 0,
+  .temp = 0,
+  .t1 = 0,
+  .t2 = 0,
+  .old_pwm = 0,
+  .setpoint = -15,
+  .p = 2,
+  .i = 0.3,
+  .d = 0.3,
+  .min_output = FAN_MIN,
+  .max_output = FAN_MAX,
+  .read_sysfs = &read_temp_directly_sysfs,
+};
+
+static struct sensor_info_sysfs sensor_optical_inlet_critical_info = {
+  .prefix = "/sys/bus/i2c/devices/i2c-0/0-000d",
   .suffix = "temp3_input",
   .error_cnt = 0,
   .temp = 0,
   .t1 = 0,
   .t2 = 0,
   .old_pwm = 0,
-  .setpoint = 86,
-  .p = 3,
-  .i = 0.3,
-  .d = 0.3,
-  .min_output = FAN_MIN,
-  .max_output = FAN_MAX,
-  .read_sysfs = &read_temp_directly_sysfs,
-};
-
-static struct sensor_info_sysfs switchboard_inlet_sensor = {
-  .prefix = "/sys/bus/i2c/devices/i2c-0/0-000d",
-  .suffix = "temp1_input",
-  .error_cnt = 0,
-  .temp = 0,
-  .t1 = 0,
-  .t2 = 0,
-  .old_pwm = 0,
-  .setpoint = 89,
-  .p = 3,
-  .i = 0.3,
-  .d = 0.3,
-  .min_output = FAN_MIN,
-  .max_output = FAN_MAX,
-  .read_sysfs = &read_temp_directly_sysfs,
-};
-
-static struct sensor_info_sysfs baseboard_onboard_u3 = {
-  .prefix = "/sys/bus/i2c/drivers/lm75/7-004e",
-  .suffix = "temp1_input",
-  .error_cnt = 0,
-  .temp = 0,
-  .t1 = 0,
-  .t2 = 0,
-  .old_pwm = 0,
   .setpoint = 0,
   .p = 0,
   .i = 0,
   .d = 0,
-  .min_output = FAN_MIN,
-  .max_output = FAN_MAX,
-  .read_sysfs = &read_temp_sysfs,
-};
-
-static struct sensor_info_sysfs baseboard_onboard_u41 = {
-  .prefix = "/sys/bus/i2c/drivers/lm75/7-004f",
-  .suffix = "temp1_input",
-  .error_cnt = 0,
-  .temp = 0,
-  .t1 = 0,
-  .t2 = 0,
-  .old_pwm = 0,
-  .setpoint = 0,
-  .p = 0,
-  .i = 0,
-  .d = 0,
-  .min_output = FAN_MIN,
-  .max_output = FAN_MAX,
-  .read_sysfs = &read_temp_sysfs,
-};
-
-static struct sensor_info_sysfs pdbboard_onboard_u8 = {
-  .prefix = "/sys/bus/i2c/drivers/lm75/31-0048",
-  .suffix = "temp1_input",
-  .error_cnt = 0,
-  .temp = 0,
-  .t1 = 0,
-  .t2 = 0,
-  .old_pwm = 0,
-  .setpoint = 0,
-  .p = 0,
-  .i = 0,
-  .d = 0,
-  .min_output = FAN_MIN,
-  .max_output = FAN_MAX,
-  .read_sysfs = &read_temp_sysfs,
-};
-
-static struct sensor_info_sysfs pdbboard_onboard_u10 = {
-  .prefix = "/sys/bus/i2c/drivers/lm75/31-0049",
-  .suffix = "temp1_input",
-  .error_cnt = 0,
-  .temp = 0,
-  .t1 = 0,
-  .t2 = 0,
-  .old_pwm = 0,
-  .setpoint = 0,
-  .p = 0,
-  .i = 0,
-  .d = 0,
-  .min_output = FAN_MIN,
-  .max_output = FAN_MAX,
-  .read_sysfs = &read_temp_sysfs,
-};
-
-static struct sensor_info_sysfs fcbboard_onboard_u8 = {
-  .prefix = "/sys/bus/i2c/drivers/lm75/39-0049",
-  .suffix = "temp1_input",
-  .error_cnt = 0,
-  .temp = 0,
-  .t1 = 0,
-  .t2 = 0,
-  .old_pwm = 0,
-  .setpoint = 0,
-  .p = 0,
-  .i = 0,
-  .d = 0,
-  .min_output = FAN_MIN,
-  .max_output = FAN_MAX,
-  .read_sysfs = &read_temp_sysfs,
-};
-
-static struct sensor_info_sysfs fcbboard_onboard_u10 = {
-  .prefix = "/sys/bus/i2c/drivers/lm75/39-0049",
-  .suffix = "temp1_input",
-  .error_cnt = 0,
-  .temp = 0,
-  .t1 = 0,
-  .t2 = 0,
-  .old_pwm = 0,
-  .setpoint = 0,
-  .p = 0,
-  .i = 0,
-  .d = 0,
-  .min_output = FAN_MIN,
-  .max_output = FAN_MAX,
-  .read_sysfs = &read_temp_sysfs,
-};
-
-static struct sensor_info_sysfs come_inlet_u7 = {
-  .prefix = "/sys/bus/i2c/devices/i2c-0/0-000d",
-  .suffix = "temp2_input",
-  .error_cnt = 0,
-  .temp = 0,
-  .t1 = 0,
-  .t2 = 0,
-  .old_pwm = 0,
-  .setpoint = 0,
-  .p = 0,
-  .i = 0,
-  .d = 0,
-  .min_output = FAN_MIN,
-  .max_output = FAN_MAX,
-  .read_sysfs = &read_temp_directly_sysfs,
-};
-
-static struct sensor_info_sysfs sensor_cpu_inlet_critical_info = {
-  .prefix = "/sys/bus/i2c/devices/i2c-0/0-000d",
-  .suffix = "temp2_input",
-  .error_cnt = 0,
-  .temp = 0,
-  .t1 = 0,
-  .t2 = 0,
-  .old_pwm = 0,
-  .setpoint = 89,
-  .p = 3,
-  .i = 0.3,
-  .d = 0.3,
   .min_output = FAN_MIN,
   .max_output = FAN_MAX,
   .read_sysfs = &read_temp_directly_sysfs,
@@ -457,7 +387,7 @@ static struct sensor_info_sysfs sensor_cpu_inlet_critical_info = {
 
 
 /* fantray info*/
-static struct fan_info_stu_sysfs fan1_info = {
+static struct fan_info_stu_sysfs fan4_info = {
   .prefix = "/sys/bus/i2c/devices/i2c-8/8-000d",
   .front_fan_prefix = "fan1_input",
   .rear_fan_prefix = "fan2_input",
@@ -470,7 +400,7 @@ static struct fan_info_stu_sysfs fan1_info = {
   .rear_failed = 0,
 };
 
-static struct fan_info_stu_sysfs fan2_info = {
+static struct fan_info_stu_sysfs fan3_info = {
   .prefix = "/sys/bus/i2c/devices/i2c-8/8-000d",
   .front_fan_prefix = "fan3_input",
   .rear_fan_prefix = "fan4_input",
@@ -483,7 +413,7 @@ static struct fan_info_stu_sysfs fan2_info = {
   .rear_failed = 0,
 };
 
-static struct fan_info_stu_sysfs fan3_info = {
+static struct fan_info_stu_sysfs fan2_info = {
   .prefix = "/sys/bus/i2c/devices/i2c-8/8-000d",
   .front_fan_prefix = "fan5_input",
   .rear_fan_prefix = "fan6_input",
@@ -496,7 +426,7 @@ static struct fan_info_stu_sysfs fan3_info = {
   .rear_failed = 0,
 };
 
-static struct fan_info_stu_sysfs fan4_info = {
+static struct fan_info_stu_sysfs fan1_info = {
   .prefix = "/sys/bus/i2c/devices/i2c-8/8-000d",
   .front_fan_prefix = "fan7_input",
   .rear_fan_prefix = "fan8_input",
@@ -509,53 +439,14 @@ static struct fan_info_stu_sysfs fan4_info = {
   .rear_failed = 0,
 };
 
-static struct fan_info_stu_sysfs fan5_info = {
-  .prefix = "/sys/bus/i2c/devices/i2c-8/8-000d",
-  .front_fan_prefix = "fan9_input",
-  .rear_fan_prefix = "fan10_input",
-  .pwm_prefix = "fan5_pwm",
-  .fan_led_prefix = "fan5_led",
-  .fan_present_prefix = "fan5_present",
-  .fan_status_prefix = NULL,
-  //.present = 1,
-  .front_failed = 0,
-  .rear_failed = 0,
-};
-
-static struct fan_info_stu_sysfs psu4_fan_info = {
+static struct fan_info_stu_sysfs psu2_fan_info = {
   .prefix = "/sys/bus/i2c/devices/i2c-0/0-000d",
   .front_fan_prefix = "fan1_input",
   .rear_fan_prefix = "/sys/bus/i2c/devices/i2c-24/24-0058",
   .pwm_prefix = "fan1_pct",
-  .fan_led_prefix = "psu_led_ctrl_en",
-  .fan_present_prefix = "psu_1_present",
-  .fan_status_prefix = "psu_1_status",
-  //.present = 1,
-  .front_failed = 0,
-  .rear_failed = 0,
-};
-
-static struct fan_info_stu_sysfs psu3_fan_info = {
-  .prefix = "/sys/bus/i2c/devices/i2c-0/0-000d",
-  .front_fan_prefix = "fan1_input",
-  .rear_fan_prefix = "/sys/bus/i2c/devices/i2c-25/25-0058",
-  .pwm_prefix = "fan1_pct",
-  .fan_led_prefix = "psu_led_ctrl_en",
-  .fan_present_prefix = "psu_2_present",
-  .fan_status_prefix = "psu_2_status",
-  //.present = 1,
-  .front_failed = 0,
-  .rear_failed = 0,
-};
-
-static struct fan_info_stu_sysfs psu2_fan_info = {
-  .prefix = "/sys/bus/i2c/devices/i2c-0/0-000d",
-  .front_fan_prefix = "fan1_input",
-  .rear_fan_prefix = "/sys/bus/i2c/devices/i2c-26/26-0058",
-  .pwm_prefix = "fan1_pct",
-  .fan_led_prefix = "psu_led_ctrl_en",
-  .fan_present_prefix = "psu_3_present",
-  .fan_status_prefix = "psu_3_status",
+  .fan_led_prefix = "psu_l_led_ctrl_en",
+  .fan_present_prefix = "psu_l_present",
+  .fan_status_prefix = "psu_l_status",
   //.present = 1,
   .front_failed = 0,
   .rear_failed = 0,
@@ -564,11 +455,11 @@ static struct fan_info_stu_sysfs psu2_fan_info = {
 static struct fan_info_stu_sysfs psu1_fan_info = {
   .prefix = "/sys/bus/i2c/devices/i2c-0/0-000d",
   .front_fan_prefix = "fan1_input",
-  .rear_fan_prefix = "/sys/bus/i2c/devices/i2c-27/27-0058",
+  .rear_fan_prefix = "/sys/bus/i2c/devices/i2c-25/25-0059",
   .pwm_prefix = "fan1_pct",
-  .fan_led_prefix = "psu_led_ctrl_en",
-  .fan_present_prefix = "psu_4_present",
-  .fan_status_prefix = "psu_4_status",
+  .fan_led_prefix = "psu_l_led_ctrl_en",
+  .fan_present_prefix = "psu_r_present",
+  .fan_status_prefix = "psu_r_status",
   //.present = 1,
   .front_failed = 0,
   .rear_failed = 0,
@@ -583,78 +474,79 @@ static struct board_info_stu_sysfs board_info[] = {
 	{
 		.name = "INLET_TEMP",
 		.slot_id = FAN_DIR_B2F,
-		.correction = -4,
+		.correction = -1,
 		.lwarn = 40,
 		.hwarn = 43,
 		.warn_count = 0,
 		.recovery_count = 0,
 		.flag = CRITICAL_SENSOR_BIT,
-		.critical = &pdbboard_onboard_u10,
-		.alarm = &pdbboard_onboard_u10,
+		.critical = &sensor_inlet_u52_critical_info,
+		.alarm = &sensor_inlet_u52_critical_info,
 	},
 #ifdef CONFIG_FSC_CONTROL_PID
 	{
 		.name = "SWITCH_TEMP",
 		.slot_id = FAN_DIR_B2F,
-		.correction = 4,
-		.lwarn = 105,
-		.hwarn = 110,
+		.correction = 15,
+		.lwarn = 108,
+		.hwarn = 112,
 		.warn_count = 0,
 		.recovery_count = 0,
 		.flag = PID_CTRL_BIT,
-		.critical = &switchboard_inlet_sensor,
-		.alarm = &switchboard_inlet_sensor,
+		.critical = &sensor_bcm5870_inlet_critical_info_b2f,
+		.alarm = &sensor_bcm5870_inlet_critical_info_b2f,
 	},
 	{
 		.name = "CPU_TEMP",
 		.slot_id = FAN_DIR_B2F,
-		.correction = 0,
-		.lwarn = 101,
-		.hwarn = 103,
+		.correction = -104,
+		.lwarn = -3,
+		.hwarn = -1,
 		.warn_count = 0,
 		.recovery_count = 0,
 		.flag = PID_CTRL_BIT,//PID_CTRL_BIT,
-		.critical = &sensor_cpu_inlet_critical_info,
-		.alarm = &sensor_cpu_inlet_critical_info,
+		.critical = &sensor_cpu_inlet_critical_info_b2f,
+		.alarm = &sensor_cpu_inlet_critical_info_b2f,
 	},
 #endif
+
 	/*F2B*/
 	{
 		.name = "INLET_TEMP",
 		.slot_id = FAN_DIR_F2B,
-		.correction = -4,
+		.correction = -6,
 		.lwarn = 40,
 		.hwarn = 43,
 		.warn_count = 0,
 		.recovery_count = 0,
 		.flag = CRITICAL_SENSOR_BIT,
-		.critical = &pdbboard_onboard_u10,
-		.alarm = &pdbboard_onboard_u10,
+		.critical = &sensor_inlet_u28_critical_info,
+		.alarm = &sensor_inlet_u28_critical_info,
 	},
 #ifdef CONFIG_FSC_CONTROL_PID
 	{
 		.name = "SWITCH_TEMP",
 		.slot_id = FAN_DIR_F2B,
-		.correction = 4,
-		.lwarn = 105,
-		.hwarn = 110,
+		.correction = 15,
+		.lwarn = 108,
+		.hwarn = 112,
 		.warn_count = 0,
 		.recovery_count = 0,
 		.flag = PID_CTRL_BIT,
-		.critical = &switchboard_inlet_sensor,
-		.alarm = &switchboard_inlet_sensor,
+		.critical = &sensor_bcm5870_inlet_critical_info_f2b,
+		.alarm = &sensor_bcm5870_inlet_critical_info_f2b,
 	},
 	{
 		.name = "CPU_TEMP",
 		.slot_id = FAN_DIR_F2B,
-		.correction = 0,
-		.lwarn = 101,
-		.hwarn = 103,
+		.correction = -104,
+		.lwarn = -3,
+		.hwarn = -1,
 		.warn_count = 0,
 		.recovery_count = 0,
 		.flag = PID_CTRL_BIT,//PID_CTRL_BIT,
-		.critical = &sensor_cpu_inlet_critical_info,
-		.alarm = &sensor_cpu_inlet_critical_info,
+		.critical = &sensor_cpu_inlet_critical_info_f2b,
+		.alarm = &sensor_cpu_inlet_critical_info_f2b,
 	},
 #endif
 	NULL,
@@ -667,9 +559,9 @@ static struct fantray_info_stu_sysfs fantray_info[] = {
     .read_eeprom = 1,
     .status = 1,
     .failed = 0,
-	.direction = FAN_DIR_INIT,
+    .direction = FAN_DIR_INIT,
     .eeprom_fail = 0,
-    .fan1 = fan5_info,
+    .fan1 = fan1_info,
   },
   {
     .name = "FAN2",
@@ -677,9 +569,9 @@ static struct fantray_info_stu_sysfs fantray_info[] = {
     .read_eeprom = 1,
     .status = 1,
     .failed = 0,
-	.direction = FAN_DIR_INIT,
+    .direction = FAN_DIR_INIT,
     .eeprom_fail = 0,
-    .fan1 = fan4_info,
+    .fan1 = fan2_info,
   },
   {
     .name = "FAN3",
@@ -687,7 +579,7 @@ static struct fantray_info_stu_sysfs fantray_info[] = {
     .read_eeprom = 1,
     .status = 1,
     .failed = 0,
-	.direction = FAN_DIR_INIT,
+    .direction = FAN_DIR_INIT,
     .eeprom_fail = 0,
     .fan1 = fan3_info,
   },
@@ -697,22 +589,12 @@ static struct fantray_info_stu_sysfs fantray_info[] = {
     .read_eeprom = 1,
     .status = 1,
     .failed = 0,
-	.direction = FAN_DIR_INIT,
-	.eeprom_fail = 0,
-    .fan1 = fan2_info,
+    .direction = FAN_DIR_INIT,
+    .eeprom_fail = 0,
+    .fan1 = fan4_info,
   },
   {
-    .name = "FAN5",
-    .present = 1,
-    .read_eeprom = 1,
-    .status = 1,
-    .failed = 0,
-	.direction = FAN_DIR_INIT,
-	.eeprom_fail = 0,
-    .fan1 = fan1_info,
-  },
-  {
-	.name = "PSU 1",
+	.name = "PSU1",
 	.present = 1,
 	.read_eeprom = 1,
 	.status = 1,
@@ -722,7 +604,7 @@ static struct fantray_info_stu_sysfs fantray_info[] = {
 	.fan1 = psu1_fan_info,
   },
   {
-	.name = "PSU 2",
+	.name = "PSU2",
 	.present = 1,
 	.read_eeprom = 1,
 	.status = 1,
@@ -730,26 +612,6 @@ static struct fantray_info_stu_sysfs fantray_info[] = {
 	.direction = FAN_DIR_INIT,
 	.eeprom_fail = 0,
 	.fan1 = psu2_fan_info,
-  },
-  {
-	.name = "PSU 3",
-	.present = 1,
-	.read_eeprom = 1,
-    .status = 1,
-	.failed = 0,
-	.direction = FAN_DIR_INIT,
-	.eeprom_fail = 0,
-	.fan1 = psu3_fan_info,
-  },
-  {
-	.name = "PSU 4",
-	.present = 1,
-	.read_eeprom = 1,
-    .status = 1,
-	.failed = 0,
-	.direction = FAN_DIR_INIT,
-	.eeprom_fail = 0,
-	.fan1 = psu4_fan_info,
   },
   NULL,
 };
@@ -761,7 +623,7 @@ static struct fantray_info_stu_sysfs fantray_info[] = {
 #define FANTRAY_INFO_SIZE (sizeof(fantray_info) \
                         / sizeof(struct fantray_info_stu_sysfs))
 
-static struct rpm_to_pct_map rpm_front_map[] = {{20, 4950},
+struct rpm_to_pct_map rpm_front_map[] = {{20, 4950},
                                          {25, 6150},
                                          {30, 7500},
                                          {35, 8700},
@@ -779,7 +641,7 @@ static struct rpm_to_pct_map rpm_front_map[] = {{20, 4950},
                                          {95, 23550},
                                          {100, 24150}};
 
-static struct rpm_to_pct_map rpm_rear_map[] = {{20, 6000},
+struct rpm_to_pct_map rpm_rear_map[] = {{20, 6000},
                                         {25, 7500},
                                         {30, 8850},
                                         {35, 10500},
@@ -797,7 +659,7 @@ static struct rpm_to_pct_map rpm_rear_map[] = {{20, 6000},
                                         {95, 28350},
                                         {100, 28950}};
 
-static struct rpm_to_pct_map psu_rpm_map[] = {{20, 8800},
+struct rpm_to_pct_map psu_rpm_map[] = {{20, 8800},
                                         {25, 8800},
                                         {30, 8800},
                                         {35, 8800},
@@ -822,28 +684,28 @@ static struct rpm_to_pct_map psu_rpm_map[] = {{20, 8800},
 static struct thermal_policy f2b_normal_policy = {
 	.pwm = FAN_NORMAL_MIN,
 	.old_pwm = FAN_NORMAL_MIN,
-	.line = &ivystone_f2b_normal,
+	.line = &fishbone48_f2b_normal,
 	// .calculate_pwm = calculate_fan_normal_pwm,
 };
 
 static struct thermal_policy f2b_one_fail_policy = {
 	.pwm = FAN_ONE_FAIL_MIN,
 	.old_pwm = FAN_ONE_FAIL_MIN,
-	.line = &ivystone_f2b_onefail,
+	.line = &fishbone48_f2b_onefail,
 	// .calculate_pwm = calculate_fan_one_fail_pwm,
 };
 
 static struct thermal_policy b2f_normal_policy = {
 	.pwm = FAN_NORMAL_MIN,
 	.old_pwm = FAN_NORMAL_MIN,
-	.line = &ivystone_b2f_normal,
+	.line = &fishbone48_b2f_normal,
 	// .calculate_pwm = calculate_fan_normal_pwm,
 };
 
 static struct thermal_policy b2f_one_fail_policy = {
 	.pwm = FAN_ONE_FAIL_MIN,
 	.old_pwm = FAN_ONE_FAIL_MIN,
-	.line = &ivystone_b2f_onefail,
+	.line = &fishbone48_b2f_onefail,
 	// .calculate_pwm = calculate_fan_one_fail_pwm,
 };
 
@@ -853,9 +715,6 @@ static int direction = FAN_DIR_INIT;
 static int sys_fan_led_color = 0;
 static int psu_led_color = 0;
 static int fan_speed_temp = FAN_MEDIUM;
-#if SENSOR_LOST_SIMULATION
-static int sensor_lost = 0;
-#endif
 
 static int write_fan_led(const int fan, const int color);
 static int write_fan_speed(const int fan, const int value);
@@ -1200,8 +1059,8 @@ static int read_critical_max_temp(void)
 	int i;
 	int temp, max_temp = BAD_TEMP;
 #ifdef FANCTRL_SIMULATION
-	static int t = 50;
-	static int div = -2;
+	static float t = 50;
+	static float div = -0.25;
 #endif
 
 	struct board_info_stu_sysfs *info;
@@ -1212,12 +1071,6 @@ static int read_critical_max_temp(void)
 			continue;
 		if(info->critical && (info->flag & CRITICAL_SENSOR_BIT)) {
 			temp = info->critical->read_sysfs(info->critical);
-#if SENSOR_LOST_SIMULATION
-			if((sensor_lost > 200) && (sensor_lost < 240) && !strncmp(info->name, "pdbboard_onboard_u10", 20)) {
-				temp = BAD_TEMP;
-				// syslog(LOG_DEBUG, "Sensor [%s] temp simulate", info->name);
-			}
-#endif
 			if(temp != BAD_TEMP) {
 				if(info->critical->error_cnt)
 					syslog(LOG_WARNING, "%s is NORMAL", info->name);
@@ -1244,12 +1097,12 @@ static int read_critical_max_temp(void)
 	}
 #ifdef FANCTRL_SIMULATION
 	if(t <= 15) {
-		div = 2;
+		div = 0.25;
 	} else if(t >= 50) {
-		div = -2;
+		div = -0.25;
 	}
 	t += div;
-	max_temp = t;
+	max_temp = (int)t;
 #endif
 #ifdef DEBUG
 	syslog(LOG_DEBUG, "[zmzhan]%s: critical: max_temp=%d", __func__, max_temp);
@@ -1300,16 +1153,6 @@ static int read_pid_max_temp(void)
 			continue;
 		if(info->critical && (info->flag & PID_CTRL_BIT)) {
 			temp = info->critical->read_sysfs(info->critical);
-#if SENSOR_LOST_SIMULATION
-			if((sensor_lost > 50) && (sensor_lost < 90) && !strncmp(info->name, "Switch_inlet", 12)) {
-				temp = BAD_TEMP;
-				// syslog(LOG_DEBUG, "Sensor [%s] temp simulate", info->name);
-			}
-			if((sensor_lost > 120) && (sensor_lost < 160) && !strncmp(info->name, "cpu_inlet", 9)) {
-				temp = BAD_TEMP;
-				// syslog(LOG_DEBUG, "Sensor [%s] temp simulate", info->name);
-			}
-#endif
 			if(temp != BAD_TEMP) {
 				if(info->critical->error_cnt)
 					syslog(LOG_WARNING, "%s is NORMAL", info->name);
@@ -1591,7 +1434,6 @@ static int calculate_fan_normal_pwm(int cur_temp, int last_temp)
 
 static int calculate_fan_one_fail_pwm(int cur_temp, int last_temp)
 {
-	return FAN_ONE_FAIL_MAX;
 	int value;
 	int fall_temp = (policy->old_pwm + 1 - FAN_ONE_FAIL_MIN) / ONE_FAIL_K + RAISING_TEMP_LOW;
 	if(fall_temp > RAISING_TEMP_HIGH) fall_temp = RAISING_TEMP_HIGH;
@@ -1883,14 +1725,14 @@ static int get_psu_pwm(void)
 /* Set PSU fan speed as a percentage */
 static int write_psu_fan_speed(const int fan, int value)
 {
-	return 0;
 	int i;
 	int ret;
 	char fullpath[PATH_CACHE_SIZE];
 	struct fantray_info_stu_sysfs *fantray;
 	struct fan_info_stu_sysfs *fan_info;
 
-	value = value * 100 /FAN_MAX; //convert it to pct
+
+	value = value * 100 / FAN_MAX; //convert it to pct
 	for(i = TOTAL_FANS; i < TOTAL_FANS + TOTAL_PSUS; i++) {
 		fantray = &fantray_info[i];
 		fan_info = &fantray->fan1;
@@ -2008,12 +1850,6 @@ int fan_speed_okay(const int fan, int speed, const int slop)
 		return -1;
 	}
 	front_speed = ret;
-#if SENSOR_LOST_SIMULATION
-	if(((sensor_lost < 50)) && !strncmp(fantray->name, "Fantray 1", 9)) {
-		front_speed = 500;
-		// syslog(LOG_DEBUG, "Fan [%s] speed simulate", fantray->name);
-	}
-#endif
 	usleep(11000);
 	if(front_speed < FAN_FAIL_RPM) {
 		fan_info->front_failed++;
@@ -2050,12 +1886,6 @@ int fan_speed_okay(const int fan, int speed, const int slop)
 		return -1;
 	}
 	rear_speed = ret;
-#if SENSOR_LOST_SIMULATION
-	if((sensor_lost > 120) && (sensor_lost < 160) && !strncmp(fantray->name, "Fantray 2", 9)) {
-		rear_speed = 5000;
-		// syslog(LOG_DEBUG, "Fan [%s] speed simulate", fantray->name);
-	}
-#endif
 	if(rear_speed < FAN_FAIL_RPM) {
 		fan_info->rear_failed++;
 		if(fan_info->rear_failed == 1)
@@ -2133,12 +1963,6 @@ int psu_speed_okay(const int fan, int speed, const int slop)
 		return -1;
 	}
 	psu_speed = ret;
-#if SENSOR_LOST_SIMULATION
-	if((sensor_lost > 200) && (sensor_lost < 240) && !strncmp(fantray->name, "PSU 1", 5)) {
-		psu_speed = 500;
-		// syslog(LOG_DEBUG, "Fan [%s] speed simulate", fantray->name);
-	}
-#endif
 	usleep(11000);
 	if(psu_speed < FAN_FAIL_RPM) {
 		fan_info->front_failed++;
@@ -2206,22 +2030,12 @@ static int system_shutdown(const char *why)
 
 	ret = write_sysfs_int(PSU1_SHUTDOWN_SYSFS, 1);
 	if(ret < 0) {
-		syslog(LOG_ERR, "failed to set PSU 1-1 shutdown");
+		syslog(LOG_ERR, "failed to set PSU1 shutdown");
 		return -1;
 	}
 	ret = write_sysfs_int(PSU2_SHUTDOWN_SYSFS, 1);
 	if(ret < 0) {
-		syslog(LOG_ERR, "failed to set PSU 1-2 shutdown");
-		return -1;
-	}
-	ret = write_sysfs_int(PSU3_SHUTDOWN_SYSFS, 1);
-	if(ret < 0) {
-		syslog(LOG_ERR, "failed to set PSU 2-1 shutdown");
-		return -1;
-	}
-	ret = write_sysfs_int(PSU4_SHUTDOWN_SYSFS, 1);
-	if(ret < 0) {
-		syslog(LOG_ERR, "failed to set PSU 2-2 shutdown");
+		syslog(LOG_ERR, "failed to set PSU2 shutdown");
 		return -1;
 	}
 
@@ -2251,14 +2065,11 @@ char* find_sub_string(char *src,const char *sub, int src_len)
 }
 
 const char *fan_path[] = {
-	"/sys/bus/i2c/devices/36-0050/eeprom",
-	"/sys/bus/i2c/devices/35-0050/eeprom",
 	"/sys/bus/i2c/devices/34-0050/eeprom",
-	"/sys/bus/i2c/devices/33-0050/eeprom",
 	"/sys/bus/i2c/devices/32-0050/eeprom",
-	"/sys/bus/i2c/devices/27-0050/eeprom",
-	"/sys/bus/i2c/devices/26-0050/eeprom",
-	"/sys/bus/i2c/devices/25-0050/eeprom",
+	"/sys/bus/i2c/devices/38-0050/eeprom",
+	"/sys/bus/i2c/devices/36-0050/eeprom",
+	"/sys/bus/i2c/devices/25-0051/eeprom",
 	"/sys/bus/i2c/devices/24-0050/eeprom",
 };
 static int get_fan_direction(int direction)
@@ -2323,13 +2134,21 @@ static int get_fan_direction(int direction)
 					syslog(LOG_ERR, "%s airflow direction mismatch, direction is F2B, system direction is B2F", fantray->name);
 				else
 					syslog(LOG_WARNING, "%s airflow direction match, direction is F2B, system direction is F2B", fantray->name);
-			}/* else if(find_sub_string(buffer, FAN_DIR_B2F_STR, sizeof(buffer))) {
+			} else if(find_sub_string(buffer, FAN_DIR_B2F_STR, sizeof(buffer))) {
 				r2f_fan_cnt++;
-				if(fantray->direction != FAN_DIR_B2F) {
-					fantray->direction = FAN_DIR_B2F;
-					syslog(LOG_WARNING, "%s direction changed to [Rear to front]", fantray->name);
+				if(fantray->direction == FAN_DIR_FAULT) {
+					syslog(LOG_WARNING, "%s eeprom is NORMAL", fantray->name);
+					if(fantray->eeprom_fail) {
+						syslog(LOG_WARNING, "%s model match, part number is %s", fantray->name, FAN_DIR_B2F_STR);
+						fantray->eeprom_fail = 0;
+					}
 				}
-			} */else {
+				fantray->direction = FAN_DIR_B2F;
+				if(direction != fantray->direction)
+					syslog(LOG_ERR, "%s airflow direction mismatch, direction is B2F, system direction is F2B", fantray->name);
+				else
+					syslog(LOG_WARNING, "%s airflow direction match, direction is B2F, system direction is B2F", fantray->name);
+			} else {
 				fantray->direction = FAN_DIR_FAULT;
 				if(ret > 0) {
 					fantray->eeprom_fail = 1;
@@ -2406,7 +2225,7 @@ static int get_fan_direction(int direction)
 
 	// if((f2r_fan_cnt == 0) && (r2f_fan_cnt == 0))
 	// 	syslog(LOG_ERR, "failed to get all fan direction, use default direction : Front to rear");
-	return FAN_DIR_F2B;
+
 	if(f2r_fan_cnt >= r2f_fan_cnt) {
 		// syslog(LOG_INFO, "direction: [Front to rear]");
 		return FAN_DIR_F2B;
@@ -2424,7 +2243,9 @@ int get_thermal_direction(void)
 	memset(command, 0, sizeof(command));
 	sprintf(command, "/usr/local/bin/fruid-util sys | grep 'Product Part Number' 2>/dev/null");
 	fp = popen(command, "r");
-	int thermal_dir = get_fan_direction(FAN_DIR_F2B);
+	int thermal_dir;
+	int fan, fan_speed;
+
 	if (!fp) {
 		syslog(LOG_ERR, "failed to get thermal direction");
 		syslog(LOG_WARNING, "thermal direction judged by fan direction");
@@ -2435,15 +2256,21 @@ int get_thermal_direction(void)
 		fread(buffer, sizeof(char), sizeof(buffer), fp);
 		pclose(fp);
 		if(find_sub_string(buffer, THERMAL_DIR_F2B_STR, sizeof(buffer))) {
-			//syslog(LOG_INFO, "thermal direction changed to [Front to rear]");
-			return FAN_DIR_F2B;
-		}/* else if(find_sub_string(buffer, THERMAL_DIR_B2F_STR, sizeof(buffer))) {
-			syslog(LOG_INFO, "thermal direction changed to [Front to rear]");
-			return FAN_DIR_F2B;
-			// syslog(LOG_INFO, "thermal direction changed to [Rear to front]");
-			// return FAN_DIR_B2F;
-		}*/
+			syslog(LOG_INFO, "system direction is F2B");
+			thermal_dir = FAN_DIR_F2B;
+		} else if(find_sub_string(buffer, THERMAL_DIR_B2F_STR, sizeof(buffer))) {
+			syslog(LOG_INFO, "system direction is B2F");
+			thermal_dir = FAN_DIR_B2F;
+		} else {
+			syslog(LOG_ERR, "system direction is unknown, FAN speed is set to 100%");
+			fan_speed = FAN_MAX;
+			for (fan = 0; fan < TOTAL_FANS; fan++) {
+				write_fan_speed(fan, fan_speed);
+			}
+			write_psu_fan_speed(fan, fan_speed);
+		}
 	}
+	get_fan_direction(thermal_dir);
 
 	return thermal_dir;
 }
@@ -2463,7 +2290,7 @@ static void update_thermal_direction()
 			policy = &b2f_normal_policy;
 		}
 	}
-}
+} 
 
 static int pid_ini_parser(struct board_info_stu_sysfs *info, FILE *fp)
 {
@@ -2603,12 +2430,6 @@ void fand_interrupt(int sig)
 	exit(3);
 }
 
-const char *psu_name[TOTAL_PSUS] = {
-	"PSU 1",
-	"PSU 2",
-	"PSU 3",
-	"PSU 4",
-};
 int main(int argc, char **argv) {
 	int critical_temp;
 	int old_temp = -1;
@@ -2637,9 +2458,9 @@ int main(int argc, char **argv) {
 	struct fantray_info_stu_sysfs *fantray;
 	struct fan_info_stu_sysfs *fan_info;
 
-
 	// Initialize path cache
 	init_path_cache();
+
 
 	// Start writing to syslog as early as possible for diag purposes.
 	openlog("fand_v2", LOG_CONS, LOG_DAEMON);
@@ -2660,7 +2481,7 @@ int main(int argc, char **argv) {
 	policy_init();
 
 	sleep(5);  /* Give the fans time to come up to speed */
-
+	
 	while (1) {
 		// syslog(LOG_DEBUG, "Test time internal");
 		fan_speed_temp = 0;
@@ -2772,7 +2593,7 @@ int main(int argc, char **argv) {
 		 */
 
 		sleep(3);
-		
+
 	    /* Check fan RPMs */
 
 	    for (fan = 0; fan < TOTAL_FANS; fan++) {
@@ -2791,10 +2612,10 @@ int main(int argc, char **argv) {
 			}
 		}
 		for(fan = TOTAL_FANS; fan < TOTAL_FANS + TOTAL_PSUS; fan++) {
-			if (psu_speed_okay(fan, psu_pwm, FAN_FAILURE_OFFSET)) {
+			if (psu_speed_okay(fan, fan_speed, FAN_FAILURE_OFFSET)) {
 				if (fan_bad[fan] >= FAN_FAILURE_THRESHOLD) {
 					//write_fan_led(fan, FAN_LED_GREEN);
-					syslog(LOG_CRIT, "%s has recovered", psu_name[fan - TOTAL_FANS]);
+					syslog(LOG_CRIT, "PSU %d has recovered", fan - TOTAL_FANS + 1);
 				}
 				fan_bad[fan] = 0;
 			} else {
@@ -2805,7 +2626,7 @@ int main(int argc, char **argv) {
 		fan_failure = 0;
 		sub_failed = 0;
 		one_failed = 0;
-		for (fan = 0; fan < TOTAL_FANS/* + TOTAL_PSUS*/; fan++) {
+		for (fan = 0; fan < TOTAL_FANS + TOTAL_PSUS; fan++) {
 			if (fan_bad[fan] >= FAN_FAILURE_THRESHOLD) {
 				fantray = &fantray_info[fan];
 				fan_info = &fantray->fan1;
@@ -2823,11 +2644,10 @@ int main(int argc, char **argv) {
 					syslog(LOG_DEBUG, "[zmzhan]%s:fan[%d] rear_failed=%d", __func__, fan, fan_info->rear_failed);
 #endif
 				}
-				if(fantray->failed > 0) {
+				if(fantray->present == 0) {
 					fan_failure++;
 				}
-				else if(fantray->present == 0 && fan < TOTAL_FANS)
-				{
+				else if((fantray->failed > 0) || ((fantray->direction != direction) && (fan < TOTAL_FANS))) {
 					fan_failure++;
 				}
 
@@ -2882,10 +2702,10 @@ int main(int argc, char **argv) {
 		else
 			write_sys_fan_led(SYS_FAN_LED_GREEN);
 		sys_fan_led_color = 0;
-		// if(psu_led_color)
-		// 	write_psu_fan_led(TOTAL_FANS, PSU_LED_RED);
-		// else
-		// 	write_psu_fan_led(TOTAL_FANS, PSU_LED_GREEN);
+		if(psu_led_color)
+			write_psu_fan_led(TOTAL_FANS, PSU_LED_RED);
+		else
+			write_psu_fan_led(TOTAL_FANS, PSU_LED_GREEN);
 		psu_led_color = 0;
 		/* if everything is fine, restart the watchdog countdown. If this process
 		 * is terminated, the persistent watchdog setting will cause the system
@@ -2894,9 +2714,6 @@ int main(int argc, char **argv) {
 		usleep(11000);
 		// update_thermal_direction();
 		get_fan_direction(direction);
-#if SENSOR_LOST_SIMULATION
-		sensor_lost++;
-#endif
 	}
 
 	return 0;

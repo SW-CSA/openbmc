@@ -22,7 +22,7 @@ PATH=/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/bin
 
 . /usr/local/bin/openbmc-utils.sh
 
-FAN_TOTAL=5
+FAN_TOTAL=4
 
 usage() {
     echo "Usage: $0 <PERCENT (0..100)> <Fan Unit (1..$FAN_TOTAL)> " >&2
@@ -38,7 +38,7 @@ if [ "$#" -ne 2 ] && [ "$#" -ne 1 ]; then
 fi
 
 if [ "$#" -eq 1 ]; then
-	FANS="1 2 3 4 5"
+	FANS="1 2 3 4"
 else
     if [ $2 -gt $FAN_TOTAL ]; then
         usage

@@ -439,9 +439,9 @@ echo 60000 >/sys/bus/i2c/devices/i2c-7/7-004d/hwmon/hwmon3/temp1_max_hyst
 
 
 while true; do
-    for((i = 0; i < $IVYSTONE_PSU_NUM; i++))
+    for((i = 0; i < $PSU_NUM; i++))
     do
-	    Ivystone_psu_status_check $i
+	    psu_status_check $i
     done
 
 	come_rest_status 1
