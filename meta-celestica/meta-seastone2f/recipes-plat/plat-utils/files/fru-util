@@ -1,0 +1,434 @@
+#!/bin/bash
+#
+# Copyright 2018-present Celestica. All Rights Reserved.
+#
+# This program file is free software; you can redistribute it and/or modify it
+# under the terms of the GNU General Public License as published by the
+# Free Software Foundation; version 2 of the License.
+#
+# This program is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+# for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program in a file named COPYING; if not, write to the
+# Free Software Foundation, Inc.,
+# 51 Franklin Street, Fifth Floor,
+# Boston, MA 02110-1301 USA
+
+PATH=/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/bin
+. /usr/local/bin/openbmc-utils.sh
+
+command=(
+"status fru_status"
+"psu psu_fru_"
+"sys sys_fru"
+"fan fan_fru"
+"bmc bmc_fru"
+"come come_fru"
+"fb fb_fru"
+"switch switch_fru"
+"lb lc_fru"
+)
+
+board_type=$(board_type)
+
+EEPROM_LINK_FILE="/tmp/eeprom"
+
+#System EEPROM
+SYSEEPROM_I2C_BUS=2
+SYSEEPROM_I2C_ADDR=57
+
+#BMC EEPROM
+BMCEEPROM_I2C_BUS=2
+BMCEEPROM_I2C_ADDR=53
+
+#COMe EEPROM
+COMEEEPROM_I2C_BUS=1
+COMEEEPROM_I2C_ADDR=50
+
+#FAN EEPROM
+#FAN Board EEPROM
+FBEEPROM_I2C_BUS=39
+FBEEPROM_I2C_ADDR=56
+
+#FAN Module
+if [ "$board_type" = "Phalanx" ]; then
+FAN_EEPROM_MAX=5
+FAN1_EEPROM_I2C_BUS=36
+FAN1_EEPROM_I2C_ADDR=50
+FAN2_EEPROM_I2C_BUS=35
+FAN2_EEPROM_I2C_ADDR=50
+FAN3_EEPROM_I2C_BUS=34
+FAN3_EEPROM_I2C_ADDR=50
+FAN4_EEPROM_I2C_BUS=33
+FAN4_EEPROM_I2C_ADDR=50
+FAN5_EEPROM_I2C_BUS=32
+FAN5_EEPROM_I2C_ADDR=50
+else
+#For Fishbone
+FAN_EEPROM_MAX=4
+FAN1_EEPROM_I2C_BUS=36
+FAN1_EEPROM_I2C_ADDR=50
+FAN2_EEPROM_I2C_BUS=38
+FAN2_EEPROM_I2C_ADDR=50
+FAN3_EEPROM_I2C_BUS=32
+FAN3_EEPROM_I2C_ADDR=50
+FAN4_EEPROM_I2C_BUS=34
+FAN4_EEPROM_I2C_ADDR=50
+fi
+
+#For Phalanx
+if [ "$board_type" = "Phalanx" ]; then
+LC_EEPROM_MAX=2
+LC1_EEPROM_I2C_BUS=9
+LC1_EEPROM_I2C_ADDR=52
+LC2_EEPROM_I2C_BUS=10
+LC2_EEPROM_I2C_ADDR=52
+fi
+
+#For Phalanx PSU
+if [ "$board_type" = "Phalanx" ]; then
+PSU_EEPROM_MAX=4
+PSU_ADDR_I2C_BUS=( '27 0x58' '26 0x58' '25 0x58' '24 0x58' )
+else
+#For Fishbone PSU
+PSU_EEPROM_MAX=2
+PSU_ADDR_I2C_BUS=( '25 0x59' '24 0x58' )
+fi
+
+############################################
+read_info() {
+	echo `cat /sys/bus/i2c/devices/i2c-${1}/${1}-00${2}/${3} | head -n 1`
+}
+
+psu_present() {
+	if [ "$board_type" = "Phalanx" ]; then
+		if [ $1 -le $PSU_EEPROM_MAX ]; then
+			((real_psu = $PSU_EEPROM_MAX - $1 + 1))
+			((val=$(read_info 0 0d psu_${real_psu}_present)))
+		fi
+	else
+		if [ $1 -ne 1  ]; then
+			((val=$(read_info 0 0d psu_l_present)))
+		else
+			((val=$(read_info 0 0d psu_r_present)))
+		fi
+	fi
+	if [ $val -eq 0 ]; then
+		return 1
+	else
+		return 0
+	fi
+}
+
+psu_power_type() {
+	if [ $1 -le $PSU_EEPROM_MAX ]; then
+		power_type=$(i2cget -f -y ${PSU_ADDR_I2C_BUS[$(($1-1))]} 0xd8 2>/dev/null)
+	fi
+	
+	if [ -z $power_type ]; then
+		echo "Unknown"
+	elif [ $power_type = "0x00" ]; then
+		echo "AC"
+	elif [ $power_type = "0x01" ]; then
+		echo "DC"
+	else
+		echo "Unknown"
+	fi
+}
+
+psu_power() {
+	if [ "$board_type" = "Phalanx" ]; then
+		if [ $1 -le $PSU_EEPROM_MAX ]; then
+			((real_psu = $PSU_EEPROM_MAX - $1 + 1))
+			((val=$(read_info 0 0d psu_${real_psu}_status)))
+		fi
+	else
+		if [ $1 -ne 1  ]; then
+			((val=$(read_info 0 0d psu_l_status)))
+		else
+			((val=$(read_info 0 0d psu_r_status)))
+		fi
+	fi
+	if [ $val -eq 0 ]; then
+		return 1
+	else
+		return 0
+	fi
+}
+
+psu_acok() {
+	if [ "$board_type" = "Phalanx" ]; then
+		if [ $1 -le $PSU_EEPROM_MAX ]; then
+			((real_psu = $PSU_EEPROM_MAX - $1 + 1))
+			((val=$(read_info 0 0d psu_${real_psu}_ac_status)))
+		fi
+	else
+		if [ $1 -ne 1  ]; then
+			((val=$(read_info 0 0d psu_l_ac_status)))
+		else
+			((val=$(read_info 0 0d psu_r_ac_status)))
+		fi
+	fi
+	if [ $val -eq 0 ]; then
+		return 1
+	else
+		return 0
+	fi
+}
+
+psu_eeprom_path()
+{
+	echo "/sys/bus/i2c/devices/${1}-00${2}/eeprom"
+}
+
+psu_info() {
+	if [ "$board_type" = "Phalanx" ]; then
+		if [ $1 -le $PSU_EEPROM_MAX ]; then
+			echo "PSU${1} FRU:"
+			$(psu_present $1)
+			if [ $? -eq 0 ]; then
+				echo "Present: Absent"
+				return 1
+			fi
+			if [ $(eeprom_data -d psu$1 -c /etc/eeprom-data/eeprom_phalanx.xml | grep 'DPS-1100' > /dev/null; echo $?) == 0 ]; then
+				eeprom_data -d psu$1 -c /etc/eeprom-data/eeprom_phalanx.xml 2>/dev/null
+			else
+				fruid-util psu$1 2>/dev/null
+			fi
+		else
+			echo "Invalid PSU number"
+		fi
+	else
+		if [ "$1" == "1" ]; then
+			echo "PSU1 FRU:"
+			$(psu_present 1)
+			if [ $? -eq 0 ]; then
+				echo "Present: Absent"
+				return 1
+			fi
+			if [ $(eeprom_data -d psu1 -c /etc/eeprom-data/eeprom_fishbone.xml | grep 'DPS-1100' > /dev/null; echo $?) == 0 ]; then
+				eeprom_data -d psu1 -c /etc/eeprom-data/eeprom_fishbone.xml 2>/dev/null
+			else
+				fruid-util psu1 2>/dev/null
+			fi
+		elif [ "$1" == "2" ]; then
+			echo "PSU2 FRU:"
+			$(psu_present 2)
+			if [ $? -eq 0 ]; then
+				echo "Present: Absent"
+				return 1
+			fi
+			if [ $(eeprom_data -d psu2 -c /etc/eeprom-data/eeprom_fishbone.xml | grep 'DPS-1100' > /dev/null; echo $?) == 0 ]; then
+				eeprom_data -d psu2 -c /etc/eeprom-data/eeprom_fishbone.xml 2>/dev/null
+			else
+				fruid-util psu2 2>/dev/null
+			fi
+		else
+			echo "Invalid PSU number"
+		fi
+	fi
+}
+
+psu_usage() {
+	echo "option:"
+	echo "-a    show all psu FRU"
+	if [ "$board_type" = "Phalanx" ]; then
+		echo "-p <1/2/3/4>    show specific psu FRU"
+	else
+		echo "-p <1/2>    show specific psu FRU"
+	fi
+}
+
+fan_usage() {
+	echo "option:"
+	echo "<fanID> [arg]    get/set FAN FRU"
+}
+
+psu_fru_() {
+	if [ $# -lt 1 ]; then
+		psu_usage
+		return 1		
+	fi
+	while getopts "ap:" opt; do
+		case $opt in
+		a)
+			for index in $(seq 1 ${PSU_EEPROM_MAX})
+			do
+				psu_info $index
+				echo
+			done
+			;;
+		p)
+			psu_info $OPTARG
+			;;
+		\?)
+			psu_usage
+		esac
+	done
+}
+
+sys_fru() {
+	fruid-util sys
+}
+
+bmc_fru() {
+	fruid-util bmc
+}
+
+come_fru() {
+	fruid-util cpu
+}
+
+fb_fru() {
+	fruid-util fb
+}
+
+switch_fru() {
+	fruid-util switch
+}
+
+fan_present() {
+	i=$1
+	real_index=$(($FAN_EEPROM_MAX-$i+1))
+	(( val=$(read_info 8 0d fan${real_index}_present )))
+	if [ $val -eq 0 ]; then
+		return 1
+	else
+		return 0
+	fi
+}
+
+fan_fru() {
+	if [ $# -lt 1 ] || [ $1 -lt 0 ] || [ $1 -gt ${FAN_EEPROM_MAX} ]; then
+		fan_usage
+		return 1
+	fi
+	i=$1
+	$(fan_present $i)
+	if [ $? -eq 0 ] ; then
+		echo "FAN${i} Present: Absent"
+		return 1
+	fi
+	fruid-util fan${i}
+}
+
+lc_usage() {
+	echo "fru-util lb 1/2"
+}
+
+lc_fru() {
+	if [ "$board_type" != "Phalanx" ]; then
+		echo "Warning: Board $board_type does not support the function!"
+		exit 0
+	fi
+	if [ $# -lt 1 ] || [ $1 -le 0 ] || [ $1 -gt ${LC_EEPROM_MAX} ]; then
+		lc_usage
+		return 1
+	fi
+	i=$1
+	echo "LC${i} FRU:"
+	fruid-util lc${i}
+	# i2c_bus=$((LC${i}_EEPROM_I2C_BUS))
+	# i2c_addr=$((LC${i}_EEPROM_I2C_ADDR))
+	# if [ -L ${EEPROM_LINK_FILE} ]; then
+	# 	rm -rf ${EEPROM_LINK_FILE}
+	# fi
+	# ln -s /sys/bus/i2c/devices/i2c-${i2c_bus}/${i2c_bus}-00${i2c_addr}/eeprom  ${EEPROM_LINK_FILE}
+	# shift
+	# syseeprom $@
+}
+
+show_psu_status() {
+	$(psu_present $1)
+	if [ $? -eq 1 ]; then
+        echo "Present: Present"
+    else
+        echo "Present: Absent"
+        echo "Power Type: Unknown"
+        echo "Power Status: Not OK"
+        echo "AC Status: Not OK"
+		return 1
+    fi
+
+	echo "Power Type:" $(psu_power_type $1)
+
+	$(psu_power $1)
+    if [ $? -eq 0 ]; then
+        echo "Power Status: OK"
+    else
+        echo "Power Status: Not OK"
+    fi
+
+	$(psu_acok $1)
+    if [ $? -eq 0 ]; then
+        echo "AC Status: OK"
+    else
+        echo "AC Status: Not OK"
+    fi
+}
+
+fru_status() {
+	all=0
+	if [ $# -eq 0 ]; then
+		all=1
+	fi
+	if [ "$1" = "psu" ] || [ $all -eq 1 ]; then
+		for i in $( seq 1 $PSU_EEPROM_MAX )
+		do
+			echo "PSU${i}:"
+			show_psu_status $i
+			echo
+		done
+	fi
+
+	if [ "$1" = "fan" ] || [ $all -eq 1 ]; then
+		for i in $( seq 1 $FAN_EEPROM_MAX )
+		do
+			echo -n "Fan$i: "
+			$(fan_present $i)
+			if [ $? -eq 1 ]; then
+				echo "Present"
+			else
+				echo "Absent"
+			fi
+			echo
+		done
+	fi
+}
+
+##############################################
+if [ $# -lt 1 ]; then
+	echo "Error: parameter must >= 1"
+	echo "Support commands: "
+	for i in "${command[@]}"; do
+		s=($i)
+		echo $s
+	done
+	exit 1
+fi
+
+for i in "${command[@]}"; do
+	matched=0
+	s=($i)
+	for j in "${s[@]}"; do
+		#echo $j
+		if [ $matched -eq 1 ]; then
+			shift
+			$j $@
+			exit 0
+		fi
+		if [ "$1" == "$j" ]; then
+			matched=1
+			continue
+		else
+			matched=0
+			break;
+		fi
+	done
+done
+
+echo "Invalid parameter: $1"
+exit 1

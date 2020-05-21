@@ -1,0 +1,2 @@
+Common targets are:
+    seastone2f-image

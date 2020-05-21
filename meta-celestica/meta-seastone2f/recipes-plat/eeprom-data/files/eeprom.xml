@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Board Name="Fishbone">
+    <Device Name="psu1" Path="/sys/bus/i2c/devices/25-0051/eeprom" Size="0xB0" SizeSystem="Hex">
+        <DataItem Name="MFR ID" Offset="0x20" OffsetSystem="Hex" Length="15" LengthSystem="Dec"/>
+        <DataItem Name="Serial Number" Offset="0x40" OffsetSystem="Hex" Length="14" LengthSystem="Dec"/>
+        <DataItem Name="Product Name" Offset="0x50" OffsetSystem="Hex" Length="12" LengthSystem="Dec"/>
+        <DataItem Name="Product Version" Offset="0x5D" OffsetSystem="Hex" Length="3" LengthSystem="Dec"/>
+    </Device>
+    <Device Name="psu2" Path="/sys/bus/i2c/devices/24-0050/eeprom" Size="0xB0" SizeSystem="Hex">
+        <DataItem Name="MFR ID" Offset="0x20" OffsetSystem="Hex" Length="15" LengthSystem="Dec"/>
+        <DataItem Name="Serial Number" Offset="0x40" OffsetSystem="Hex" Length="14" LengthSystem="Dec"/>
+        <DataItem Name="Product Name" Offset="0x50" OffsetSystem="Hex" Length="12" LengthSystem="Dec"/>
+        <DataItem Name="Product Version" Offset="0x5D" OffsetSystem="Hex" Length="3" LengthSystem="Dec"/>
+    </Device>
+</Board>
+
+
