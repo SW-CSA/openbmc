@@ -26,14 +26,12 @@ SRC_URI += "file://get_fan_speed.sh \
             file://fand.cpp \
             file://fand_v2.cpp \
             file://fand32_v2.cpp \
-            file://fand_phalanx.cpp \
             file://fand_v2.h \
             file://watchdog.cpp \
             file://watchdog.h \
             file://Makefile \
             file://pid_config.ini \
             file://pid_config_v2.ini \
-            file://pid_config_v2_phalanx.ini \
            "
 
 S = "${WORKDIR}"
@@ -44,7 +42,6 @@ binfiles = "                                    \
     fand                                        \
     fand_v2                                     \
     fand32_v2                                   \
-    fand_phalanx                                   \
     "
 
 
@@ -58,7 +55,6 @@ do_install() {
   install -d ${D}${sysconfdir}/rcS.d
   install -m 644 pid_config.ini ${D}${sysconfdir}/pid_config.ini
   install -m 644 pid_config_v2.ini ${D}${sysconfdir}/pid_config_v2.ini
-  install -m 644 pid_config_v2_phalanx.ini ${D}${sysconfdir}/pid_config_v2_phalanx.ini
   install -m 755 setup-fan.sh ${D}${sysconfdir}/init.d/setup-fan.sh
   update-rc.d -r ${D} setup-fan.sh start 125 2 3 4 5 .
 }

@@ -39,10 +39,6 @@ if [ "$brd_type" = "Fishbone48" ]; then
 elif [ "$brd_type" = "Fishbone32" ]; then
     echo "Run FSC daemon fand32_v2"
     /usr/local/bin/fand32_v2
-elif [ "$brd_type" = "Phalanx" ]; then
-    echo "Run FSC daemon fand_phalanx"
-    cp /etc/pid_config_v2_phalanx.ini /mnt/data/pid_config_v2.ini -rf
-    /usr/local/bin/fand_phalanx
 else
     echo "Run default FSC daemon fand_v2"
     /usr/local/bin/fand_v2
