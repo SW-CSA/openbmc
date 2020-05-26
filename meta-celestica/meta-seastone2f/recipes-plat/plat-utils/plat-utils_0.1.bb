@@ -24,9 +24,7 @@ LIC_FILES_CHKSUM = "file://COPYING;md5=eb723b61539feef013de476e68b5c50a"
 SRC_URI = "file://ast-functions \
            file://setup_i2c.sh \
            file://setup_i2c_fishbone.sh \
-           file://setup_i2c_phalanx.sh \
            file://setup_pca9506.sh \
-           file://setup_isl68137.sh \
            file://setup_module.sh \
            file://rsyslog_config.sh \
            file://wedge_power.sh \
@@ -35,9 +33,7 @@ SRC_URI = "file://ast-functions \
            file://bcm5387.sh \
            file://setup_platform.sh \
            file://setup_sensors_fishbone.sh \
-           file://setup_sensors_phalanx.sh \
            file://power_monitor_fishbone.py \
-           file://power_monitor_phalanx.py \
            file://fru-util \
            file://come_power.sh \
            file://mount_emmc.sh \
@@ -76,14 +72,11 @@ do_install() {
   install -m 0755 wedge_power.sh ${D}${localbindir}/wedge_power.sh
   install -m 0755 board-utils.sh ${D}${localbindir}/board-utils.sh
   install -m 755 setup_pca9506.sh ${D}${localbindir}/setup_pca9506.sh
-  install -m 755 setup_isl68137.sh ${D}${localbindir}/setup_isl68137.sh
   install -m 755 power_monitor_fishbone.py ${D}${localbindir}/power_monitor_fishbone.py
-  install -m 755 power_monitor_phalanx.py ${D}${localbindir}/power_monitor_phalanx.py
-
+ 
   install -m 0755 rc.local ${D}/mnt/rc.local
   
   install -m 755 setup_i2c_fishbone.sh ${D}${sysconfdir}/init.d/setup_i2c_fishbone.sh
-  install -m 755 setup_i2c_phalanx.sh ${D}${sysconfdir}/init.d/setup_i2c_phalanx.sh
   install -m 755 setup_module.sh ${D}${sysconfdir}/init.d/setup_module.sh
   update-rc.d -r ${D} setup_module.sh start 05 S .
 
@@ -105,7 +98,6 @@ do_install() {
   update-rc.d -r ${D} power-on.sh start 85 S .
 
   install -m 755 setup_sensors_fishbone.sh ${D}${sysconfdir}/init.d/setup_sensors_fishbone.sh
-  install -m 755 setup_sensors_phalanx.sh ${D}${sysconfdir}/init.d/setup_sensors_phalanx.sh
   install -m 755 setup_platform.sh ${D}${sysconfdir}/init.d/setup_platform.sh
   update-rc.d -r ${D} setup_platform.sh start 100 2 3 4 5 .
 

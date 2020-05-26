@@ -31,7 +31,6 @@ SRC_URI = "file://eeprom_data.c \
         file://license.txt \
         file://eeprom.xml \
         file://eeprom_fishbone.xml \
-        file://eeprom_phalanx.xml \
           "
 S = "${WORKDIR}"
 pkgdir = "eeprom-data"
@@ -42,7 +41,6 @@ do_install() {
     install -d ${D}${sysconfdir}/eeprom-data
     install -m 644 eeprom.xml ${D}${sysconfdir}/eeprom-data/eeprom.xml
     install -m 644 eeprom_fishbone.xml ${D}${sysconfdir}/eeprom-data/eeprom_fishbone.xml
-    install -m 644 eeprom_phalanx.xml ${D}${sysconfdir}/eeprom-data/eeprom_phalanx.xml
     install -d ${D}${sysconfdir}/init.d
 }
 
