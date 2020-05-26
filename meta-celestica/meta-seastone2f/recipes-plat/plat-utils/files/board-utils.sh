@@ -578,7 +578,7 @@ get_psu_present() {
 }
 
 get_fan_present() {
-    if [ $1 -gt 4 ] -o [ $1 -eq 0];then
+    if [ $1 -gt 4 -o $1 -eq 0 ];then
         echo -1
         return
     fi

@@ -16,143 +16,18 @@
 
 PATH=/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/bin
 
-FANS=4
-PSU_NUM=2
-psu_status=(0 0)
-psu_path=(
-"/sys/bus/i2c/devices/i2c-25/25-0059/hwmon"
-"/sys/bus/i2c/devices/i2c-24/24-0058/hwmon"
-)
+#PSU
+psu_register_status=()   	#1:register 0:un-register
+PSUNUM=2
 psu_register=(
 "i2c_device_delete 25 0x59;i2c_device_delete 25 0x51;i2c_device_add 25 0x59 dps1100;i2c_device_add 25 0x51 24c32;set_hwmon_threshold 25 59 in1_min 90000;set_hwmon_threshold 25 59 in1_max 264000"
 "i2c_device_delete 24 0x58;i2c_device_delete 24 0x50;i2c_device_add 24 0x58 dps1100;i2c_device_add 24 0x50 24c32;set_hwmon_threshold 24 58 in1_min 90000;set_hwmon_threshold 24 58 in1_max 264000"
 )
-
-PHALANX_PSU_NUM=4
-phalanx_psu_status=(0 0 0 0)
-phalanx_psu_register=(
-"i2c_device_delete 27 0x58;i2c_device_delete 27 0x50;i2c_device_add 27 0x58 dps1100;i2c_device_add 27 0x50 24c32;set_hwmon_threshold 27 58 in1_min 90000;set_hwmon_threshold 27 58 in1_max 264000"
-"i2c_device_delete 26 0x58;i2c_device_delete 26 0x50;i2c_device_add 26 0x58 dps1100;i2c_device_add 26 0x50 24c32;set_hwmon_threshold 26 58 in1_min 90000;set_hwmon_threshold 26 58 in1_max 264000"
-"i2c_device_delete 25 0x58;i2c_device_delete 25 0x50;i2c_device_add 25 0x58 dps1100;i2c_device_add 25 0x50 24c32;set_hwmon_threshold 25 58 in1_min 90000;set_hwmon_threshold 25 58 in1_max 264000"
-"i2c_device_delete 24 0x58;i2c_device_delete 24 0x50;i2c_device_add 24 0x58 dps1100;i2c_device_add 24 0x50 24c32;set_hwmon_threshold 24 58 in1_min 90000;set_hwmon_threshold 24 58 in1_max 264000"
+psu_path=(
+"/sys/bus/i2c/devices/i2c-25/25-0059/hwmon"
+"/sys/bus/i2c/devices/i2c-24/24-0058/hwmon"
 )
 
-board_type=$(board_type)
-
-psu_status_init() {
-	id=0
-	for i in "${psu_path[@]}"
-	do
-		if [ -e "$i" ]; then
-			psu_status[$id]=1
-		else
-			logger "Warning: PSU $(($id + 1)) is absent"
-			psu_status[$id]=0
-		fi
-		id=$(($id + 1))
-	done
-}
-
-read_info() {
-    echo `cat /sys/bus/i2c/devices/i2c-${1}/${1}-00${2}/${3} | head -n 1`
-}
-
-psu_present() {
-    if [ $1 -eq 1  ]; then
-        ((val=$(read_info 0 0d psu_r_present)))
-    else
-        ((val=$(read_info 0 0d psu_l_present)))
-    fi
-    if [ $val -eq 0 ]; then
-        return 1
-    else
-        return 0
-    fi
-}
-
-psu_power() {
-    if [ $1 -eq 1  ]; then
-        ((val=$(read_info 0 0d psu_r_status)))
-    else
-        ((val=$(read_info 0 0d psu_l_status)))
-    fi
-    if [ $val -eq 0 ]; then
-        return 1
-    else
-        return 0
-    fi
-}
-
-
-psu_status_check() {
-	if [ $# -le 0 ]; then
-		return 1
-	fi
-
-	psu_present $(($1 + 1))
-	if [ $? -eq 1 ]; then
-		psu_power $(($1 + 1))
-		power_ok=$?
-		if [ ${psu_status[$1]} -eq 0 ] && [ $power_ok -eq 0 ]; then
-			logger "us_monitor: Register PSU $(($i + 1))"
-			eval "${psu_register[$1]}"
-			psu_status_init
-			return 0
-		fi
-	fi
-}
-
-
-phalanx_psu_present() {
-    ((psu_num=$PHALANX_PSU_NUM - $1 + 1))
-    ((val=$(read_info 0 0d psu_${psu_num}_present)))
-    if [ $val -eq 0 ]; then
-        return 1
-    else
-        return 0
-    fi
-}
-
-phalanx_psu_power() {
-    ((psu_num=$PHALANX_PSU_NUM - $1 + 1))
-    ((val=$(read_info 0 0d psu_${psu_num}_status)))
-    if [ $val -eq 0 ]; then
-        return 0
-    else
-        return 1
-    fi
-}
-
-phalanx_psu_status_init() {
-    for((i = 0; i < $PHALANX_PSU_NUM; i++))
-    do
-	    phalanx_psu_present $(($i + 1))
-	    if [ $? -eq 1 ]; then
-		    phalanx_psu_power $(($i + 1))
-		    power_ok=$?
-		    if [ $power_ok -eq 1 ]; then
-			    phalanx_psu_status[$i]=1
-		    fi
-	    fi
-    done
-}
-phalanx_psu_status_check() {
-	if [ $# -le 0 ]; then
-		return 1
-	fi
-
-	phalanx_psu_present $(($1 + 1))
-	if [ $? -eq 1 ]; then
-		phalanx_psu_power $(($1 + 1))
-		power_ok=$?
-		if [ ${phalanx_psu_status[$1]} -eq 0 ] && [ $power_ok -eq 1 ]; then
-			logger "us_monitor: Register PSU $(($i + 1))"
-			eval "${phalanx_psu_register[$1]}"
-			phalanx_psu_status[$1]=1
-			return 0
-		fi
-	fi
-}
 
 get_fan_pwm() {
     for i in $FANS ; do
@@ -171,17 +46,6 @@ get_fan_pwm() {
     return 0
 }
 
-get_board_type() {
-    brd_type=$(cat /sys/bus/i2c/devices/0-000d/sw_brd_type | head -n 1)
-    if [ $brd_type == 0x1 ]; then
-        echo "Seastone2F-48"
-    elif [ $brd_type == 0x0 ]; then
-        echo "Seastone2F-32"
-    else
-        echo ""
-    fi
-}
-
 get_fan_dir() {
     for i in $FANS ; do
         val=$(/usr/local/bin/fruid-util fan$i |grep R1241-F9001)
@@ -198,7 +62,7 @@ inlet_sensor_revise() {
     pwm=$?
     direction=$(get_fan_dir)
     if [ "$direction" = "F2B" ]; then
-        board=$(get_board_type)
+        board=$(board_type)
         if [ "$board" = "Seastone2F-48" ]; then
             if [ $pwm -le 45 ]; then
                 temp=7
@@ -469,11 +333,42 @@ cpu_error_autodump() {
     fi
 }
 
-if [ "$board_type" = "Seastone2F-48" -o "$board_type" = "Seastone2F-32" ]; then
-    psu_status_init
-else
-    phalanx_psu_status_init
-fi
+is_path_exist()
+{
+    if [ -e $1 ];then
+        echo 1
+    else
+        echo 0
+    fi
+}
+
+psu_initialize()
+{
+    for((i=0;i<$PSUNUM;i++))
+        {
+            # $val is present status: 1: present 0:absent
+            val=$(get_psu_present $(($i + 1)))
+            ret=$(is_path_exist ${psu_path[$i]})
+            if [ $ret -eq 1 ];then
+                psu_register_status[$i]=1
+            else
+                psu_register_status[$i]=0
+            fi
+        }
+}
+
+psu_status_check()
+{
+    for((i=0;i<$PSUNUM;i++))
+    {
+        # $val is present status: 1: present 0:absent
+        val=$(get_psu_present $(($i + 1)))
+        if [ ${psu_register_status[$i]} -eq 0 ];then
+             register_psu $i $val
+        fi
+    }
+}
+
 come_rest_status 2
 come_rst_st=$?
 revise_temp=0
@@ -481,8 +376,6 @@ cpu_update=0
 fan_wdt_st=0
 come_val=0
 bios_status=0
-#aer_error=0
-#mca_error=0
 come_wdt_count=0
 come_wdt_enable=0
 bmc_boot_check=20
@@ -490,20 +383,11 @@ bmc_boot_check=20
 echo 70000 >/sys/bus/i2c/devices/i2c-7/7-004d/hwmon/hwmon3/temp1_max
 echo 60000 >/sys/bus/i2c/devices/i2c-7/7-004d/hwmon/hwmon3/temp1_max_hyst
 
-
+psu_initialize
 
 while true; do
-    if [ "$board_type" = "Seastone2F-48" -o "$board_type" = "Seastone2F-32" ]; then
-	    for((i = 0; i < $PSU_NUM; i++))
-	    do
-		    psu_status_check $i
-	    done
-    else
-	    for((i = 0; i < $PHALANX_PSU_NUM; i++))
-	    do
-		    phalanx_psu_status_check $i
-	    done
-    fi
+    #monitor PSU
+    psu_status_check
 
 	come_rest_status 1
 	if [ $? -ne $come_rst_st ]; then
@@ -531,15 +415,6 @@ while true; do
     bios_boot_monitor $bios_status
     bios_status=$?
 
-    #COMe AER error monitor
-    #come_aer_err_monitor $aer_error
-    #aer_error=$?
-
-    #COMe MCA error monitor
-    #come_mca_err_monitor $mca_error
-    #mca_error=$?
-
-    #COMe hang watchdog monitor
     come_wdt_monitor
 
     rsyslog_update
