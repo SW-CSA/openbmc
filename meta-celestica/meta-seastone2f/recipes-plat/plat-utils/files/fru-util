@@ -32,256 +32,130 @@ command=(
 "lb lc_fru"
 )
 
-board_type=$(board_type)
 
-EEPROM_LINK_FILE="/tmp/eeprom"
-
-#System EEPROM
-SYSEEPROM_I2C_BUS=2
-SYSEEPROM_I2C_ADDR=57
-
-#BMC EEPROM
-BMCEEPROM_I2C_BUS=2
-BMCEEPROM_I2C_ADDR=53
-
-#COMe EEPROM
-COMEEEPROM_I2C_BUS=1
-COMEEEPROM_I2C_ADDR=50
-
-#FAN EEPROM
-#FAN Board EEPROM
-FBEEPROM_I2C_BUS=39
-FBEEPROM_I2C_ADDR=56
-
-#FAN Module
-
-#For Fishbone
+#For Seastone2F
 FAN_EEPROM_MAX=4
-FAN1_EEPROM_I2C_BUS=36
-FAN1_EEPROM_I2C_ADDR=50
-FAN2_EEPROM_I2C_BUS=38
-FAN2_EEPROM_I2C_ADDR=50
-FAN3_EEPROM_I2C_BUS=32
-FAN3_EEPROM_I2C_ADDR=50
-FAN4_EEPROM_I2C_BUS=34
-FAN4_EEPROM_I2C_ADDR=50
-
-
-
-#For Fishbone PSU
 PSU_EEPROM_MAX=2
 PSU_ADDR_I2C_BUS=( '25 0x59' '24 0x58' )
+PSU_XML="/etc/eeprom-data/eeprom_fishbone.xml"
+PSU_USAGE="-p <1/2>    show specific psu FRU"
 
 
 ############################################
-read_info() {
-	echo `cat /sys/bus/i2c/devices/i2c-${1}/${1}-00${2}/${3} | head -n 1`
-}
-
-psu_present() {
-	if [ $1 -ne 1  ]; then
-		((val=$(read_info 0 0d psu_l_present)))
-	else
-		((val=$(read_info 0 0d psu_r_present)))
-	fi
-	
-	if [ $val -eq 0 ]; then
-		return 1
-	else
-		return 0
-	fi
-}
-
-psu_power_type() {
-	if [ $1 -le $PSU_EEPROM_MAX ]; then
-		power_type=$(i2cget -f -y ${PSU_ADDR_I2C_BUS[$(($1-1))]} 0xd8 2>/dev/null)
-	fi
-	
-	if [ -z $power_type ]; then
-		echo "Unknown"
-	elif [ $power_type = "0x00" ]; then
-		echo "AC"
-	elif [ $power_type = "0x01" ]; then
-		echo "DC"
-	else
-		echo "Unknown"
-	fi
-}
-
-psu_power() {
-	if [ $1 -ne 1  ]; then
-		((val=$(read_info 0 0d psu_l_status)))
-	else
-		((val=$(read_info 0 0d psu_r_status)))
-	fi
-	if [ $val -eq 0 ]; then
-		return 1
-	else
-		return 0
-	fi
-}
-
-psu_acok() {
-
-	if [ $1 -ne 1  ]; then
-		((val=$(read_info 0 0d psu_l_ac_status)))
-	else
-		((val=$(read_info 0 0d psu_r_ac_status)))
-	fi
-	if [ $val -eq 0 ]; then
-		return 1
-	else
-		return 0
-	fi
-}
-
-psu_eeprom_path()
-{
-	echo "/sys/bus/i2c/devices/${1}-00${2}/eeprom"
-}
 
 psu_info() {
-		if [ "$1" == "1" ]; then
-			echo "PSU1 FRU:"
-			$(psu_present 1)
-			if [ $? -eq 0 ]; then
-				echo "Present: Absent"
-				return 1
-			fi
-			if [ $(eeprom_data -d psu1 -c /etc/eeprom-data/eeprom_fishbone.xml | grep 'DPS-1100' > /dev/null; echo $?) == 0 ]; then
-				eeprom_data -d psu1 -c /etc/eeprom-data/eeprom_fishbone.xml 2>/dev/null
-			else
-				fruid-util psu1 2>/dev/null
-			fi
-		elif [ "$1" == "2" ]; then
-			echo "PSU2 FRU:"
-			$(psu_present 2)
-			if [ $? -eq 0 ]; then
-				echo "Present: Absent"
-				return 1
-			fi
-			if [ $(eeprom_data -d psu2 -c /etc/eeprom-data/eeprom_fishbone.xml | grep 'DPS-1100' > /dev/null; echo $?) == 0 ]; then
-				eeprom_data -d psu2 -c /etc/eeprom-data/eeprom_fishbone.xml 2>/dev/null
-			else
-				fruid-util psu2 2>/dev/null
-			fi
-		else
-			echo "Invalid PSU number"
-		fi
+    val=$(get_psu_present $1)
+    if [ $val -eq 0 ]; then
+        echo "Present: Absent"
+        return 1
+    elif [ $val -eq -1 ]; then
+        echo "Invalid PSU number"
+    fi
+    if [ $(eeprom_data -d psu$1 -c $PSU_XML | grep 'DPS-1100' > /dev/null; echo $?) == 0 ]; then
+        eeprom_data -d psu$1 -c $PSU_XML 2>/dev/null
+    else
+        fruid-util psu$1 2>/dev/null
+    fi
 }
 
 psu_usage() {
-	echo "option:"
-	echo "-a    show all psu FRU"
-	echo "-p <1/2>    show specific psu FRU"
-
+    echo "option:"
+    echo "-a    show all psu FRU"
+    echo $PSU_USAGE
 }
 
 fan_usage() {
-	echo "option:"
-	echo "<fanID> [arg]    get/set FAN FRU"
+    echo "option:"
+    echo "<fanID> [arg]    get/set FAN FRU"
 }
 
 psu_fru_() {
-	if [ $# -lt 1 ]; then
-		psu_usage
-		return 1		
-	fi
-	while getopts "ap:" opt; do
-		case $opt in
-		a)
-			for index in $(seq 1 ${PSU_EEPROM_MAX})
-			do
-				psu_info $index
-				echo
-			done
-			;;
-		p)
-			psu_info $OPTARG
-			;;
-		\?)
-			psu_usage
-		esac
-	done
+    if [ $# -lt 1 ]; then
+        psu_usage
+        return 1
+    fi
+    while getopts "ap:" opt; do
+        case $opt in
+            a)
+                for index in $(seq 1 ${PSU_EEPROM_MAX})
+                do
+                    psu_info $index
+                    echo
+                done
+                ;;
+            p)
+                psu_info $OPTARG
+                ;;
+            \?)
+                psu_usage
+        esac
+    done
 }
 
 sys_fru() {
-	fruid-util sys
+    fruid-util sys
 }
 
 bmc_fru() {
-	fruid-util bmc
+    fruid-util bmc
 }
 
 come_fru() {
-	fruid-util cpu
+    fruid-util cpu
 }
 
 fb_fru() {
-	fruid-util fb
+    fruid-util fb
 }
 
 switch_fru() {
-	fruid-util switch
-}
-
-fan_present() {
-	i=$1
-	real_index=$(($FAN_EEPROM_MAX-$i+1))
-	(( val=$(read_info 8 0d fan${real_index}_present )))
-	if [ $val -eq 0 ]; then
-		return 1
-	else
-		return 0
-	fi
+    fruid-util switch
 }
 
 fan_fru() {
-	if [ $# -lt 1 ] || [ $1 -lt 0 ] || [ $1 -gt ${FAN_EEPROM_MAX} ]; then
-		fan_usage
-		return 1
-	fi
-	i=$1
-	$(fan_present $i)
-	if [ $? -eq 0 ] ; then
-		echo "FAN${i} Present: Absent"
-		return 1
-	fi
-	fruid-util fan${i}
+    if [ $# -lt 1 ] || [ $1 -lt 0 ] || [ $1 -gt ${FAN_EEPROM_MAX} ]; then
+        fan_usage
+        return 1
+    fi
+    i=$1
+    val=$(get_fan_present $i)
+    if [ $val -eq 0 ] ; then
+        echo "FAN${i} Present: Absent"
+        return 1
+    fi
+    fruid-util fan${i}
 }
 
 lc_usage() {
-	echo "fru-util lb 1/2"
+    echo "fru-util lb 1/2"
 }
 
 lc_fru() {
-	echo "Warning: Board $board_type does not support the function!"
-	exit 0
+    echo "Warning: Board $board_type does not support the function!"
+    exit 0
 }
 
 show_psu_status() {
-	$(psu_present $1)
-	if [ $? -eq 1 ]; then
+    val=$(get_psu_present $1)
+    if [ $val -eq 1 ]; then
         echo "Present: Present"
     else
         echo "Present: Absent"
         echo "Power Type: Unknown"
         echo "Power Status: Not OK"
         echo "AC Status: Not OK"
-		return 1
+        return 1
     fi
-
-	echo "Power Type:" $(psu_power_type $1)
-
-	$(psu_power $1)
-    if [ $? -eq 0 ]; then
+    echo "Power Type:" $(get_psu_input_type $1)
+    val=$(get_psu_power_status $1)
+    if [ $val -eq 1 ]; then
         echo "Power Status: OK"
     else
         echo "Power Status: Not OK"
     fi
 
-	$(psu_acok $1)
-    if [ $? -eq 0 ]; then
+    val=$(get_psu_input_status $1)
+    if [ $val -eq 1 ]; then
         echo "AC Status: OK"
     else
         echo "AC Status: Not OK"
@@ -289,32 +163,32 @@ show_psu_status() {
 }
 
 fru_status() {
-	all=0
-	if [ $# -eq 0 ]; then
-		all=1
-	fi
-	if [ "$1" = "psu" ] || [ $all -eq 1 ]; then
-		for i in $( seq 1 $PSU_EEPROM_MAX )
-		do
-			echo "PSU${i}:"
-			show_psu_status $i
-			echo
-		done
-	fi
+    all=0
+    if [ $# -eq 0 ]; then
+        all=1
+    fi
+    if [ "$1" = "psu" ] || [ $all -eq 1 ]; then
+        for i in $( seq 1 $PSU_EEPROM_MAX )
+        do
+            echo "PSU${i}:"
+            show_psu_status $i
+            echo
+        done
+    fi
 
-	if [ "$1" = "fan" ] || [ $all -eq 1 ]; then
-		for i in $( seq 1 $FAN_EEPROM_MAX )
-		do
-			echo -n "Fan$i: "
-			$(fan_present $i)
-			if [ $? -eq 1 ]; then
-				echo "Present"
-			else
-				echo "Absent"
-			fi
-			echo
-		done
-	fi
+    if [ "$1" = "fan" ] || [ $all -eq 1 ]; then
+        for i in $( seq 1 $FAN_EEPROM_MAX )
+        do
+            echo -n "Fan$i: "
+            val=$(get_fan_present $i)
+            if [ $val -eq 1 ]; then
+                echo "Present"
+            else
+                echo "Absent"
+            fi
+            echo
+        done
+    fi
 }
 
 ##############################################

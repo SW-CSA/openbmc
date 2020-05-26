@@ -62,26 +62,36 @@ enum {
 };
 
 enum {
-  FRU_ALL   = 0,
-  FRU_SYS,
-  FRU_BMC,
-  FRU_CPU,
-  FRU_FB,
-  FRU_SWITCH,
-  FRU_PSU1,
-  FRU_PSU2,
-  FRU_PSU3,
-  FRU_PSU4,
-  FRU_FAN1,
-  FRU_FAN2,
-  FRU_FAN3,
-  FRU_FAN4,
-  FRU_FAN5,
-  FRU_LINE_CARD1,
-  FRU_LINE_CARD2,
-  MAX_NUM_FRUS
+    FRU_ALL   = 0,
+    FRU_SYS,
+    FRU_BMC,
+    FRU_CPU,
+    FRU_FB,
+    FRU_SWITCH,
+    FRU_PSU1,
+    FRU_PSU2,
+    FRU_PSU3,
+    FRU_PSU4,
+    FRU_FAN1,
+    FRU_FAN2,
+    FRU_FAN3,
+    FRU_FAN4,
+    FRU_FAN5,
+    FRU_FAN6,
+    FRU_LINE_CARD1,
+    FRU_LINE_CARD2,
+    MAX_NUM_FRUS
 };
 
+typedef struct
+{
+    char * fru_str;
+    int fru_id;
+    int fru_available;
+    char * fru_path;
+    char * fru_name;
+    char * fru_prsnt;
+}fru_device_T;
 
 typedef struct _sensor_info_t {
   bool valid;

@@ -564,3 +564,87 @@ cpld_refresh() {
 	fi
     return $ret
 }
+
+get_psu_present() {
+    if [ $1 -eq 1 ]; then
+        PRESENT_NODE="${SYSCPLD_SYSFS_DIR}/psu_r_present"
+    elif [ $1 -eq 2 ]; then
+        PRESENT_NODE="${SYSCPLD_SYSFS_DIR}/psu_l_present"
+    else
+        echo "-1"
+        return
+    fi
+
+    ((present=$(cat $PRESENT_NODE |head -n 1)))
+    if [ $present -eq 0 ]; then
+        echo "1"	#present
+    else
+        echo "0"
+    fi
+}
+
+get_fan_present() {
+    if [ $1 -gt 4 ] -o [ $1 -eq 0];then
+        echo -1
+        return
+    fi
+    real_index=$((5-$1))
+    PRESENT_NODE="${FANCPLD_SYSFS_DIR}/fan${real_index}_present"
+    ((present=$(cat $PRESENT_NODE |head -n 1)))
+    if [ $present -eq 0 ]; then
+        echo "1"
+        return 1
+    else
+        echo "0"
+        return 0
+    fi
+}
+
+get_psu_input_type() {
+    if [ $1 -gt 2 ];then
+        echo "-1"
+        return
+    fi
+    PSU_ADDR_I2C_BUS=( '25 0x59' '24 0x58' )
+    power_type=$(i2cget -f -y ${PSU_ADDR_I2C_BUS[$(($1-1))]} 0xd8 2>/dev/null)
+
+    if [ -z $power_type ]; then
+        echo "Unknown"
+    elif [ $power_type = "0x00" ]; then
+        echo "AC"
+    elif [ $power_type = "0x01" ]; then
+        echo "DC"
+    else
+        echo "Unknown"
+    fi
+}
+
+get_psu_power_status() {
+    if [ $1 -eq 1 ]; then
+        POWER_STATUS_NODE="${SYSCPLD_SYSFS_DIR}/psu_r_status"
+    elif [ $1 -eq 2 ]; then
+        POWER_STATUS_NODE="${SYSCPLD_SYSFS_DIR}/psu_l_status"
+    else
+        echo "-1"
+        return
+    fi
+    ((power_status=$(cat $POWER_STATUS_NODE |head -n 1)))
+    #1 power_ok
+    echo "$power_status"
+}
+
+get_psu_input_status() {
+    if [ $1 -eq 1 ]; then
+        AC_STATUS_NODE="${SYSCPLD_SYSFS_DIR}/psu_r_ac_status"
+    elif [ $1 -eq 2 ]; then
+        AC_STATUS_NODE="${SYSCPLD_SYSFS_DIR}/psu_l_ac_status"
+    else
+        echo "-1"
+        return
+    fi
+
+    ((ac_status=$(cat $AC_STATUS_NODE |head -n 1)))
+    #1 ac_ok
+    echo "$ac_status"
+}
+
