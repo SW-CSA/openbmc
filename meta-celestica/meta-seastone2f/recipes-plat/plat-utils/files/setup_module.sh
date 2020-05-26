@@ -24,18 +24,8 @@ board_type=$(board_type)
 echo "The board name is $board_type"
 echo -n "Insert kernel modules "
 modprobe syscpld
-if [ "$board_type" = "Fishbone48" ]; then
-    echo 1 > /sys/devices/virtual/mdio_bus/ftgmac100_mii/led_ctrl
-    # modprobe syscpld_fishbone
-    modprobe fancpld_fishbone
-elif [ "$board_type" = "Fishbone32" ]; then
-    echo 1 > /sys/devices/virtual/mdio_bus/ftgmac100_mii/led_ctrl
-    # modprobe syscpld_fishbone
-    modprobe fancpld_fishbone
-else
-    # modprobe syscpld_phalanx
-    modprobe fancpld_phalanx
-fi
+echo 1 > /sys/devices/virtual/mdio_bus/ftgmac100_mii/led_ctrl
+modprobe fancpld_fishbone
 modprobe i2c-mux-pca954x ignore_probe=1
 modprobe cpu_error
 echo "Done"

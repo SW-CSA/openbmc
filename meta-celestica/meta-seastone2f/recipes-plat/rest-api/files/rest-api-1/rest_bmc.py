@@ -130,10 +130,10 @@ def get_bmc():
     (data, _) = Popen('source /usr/local/bin/openbmc-utils.sh; board_type',
                        shell=True, stdout=PIPE).communicate()
     data = data.decode()
-    if not data.find('Fishbone48'):
-        board_type = 'Fishbone48'
-    elif not data.find('Fishbone32'):
-        board_type = 'Fishbone32'
+    if not data.find('Seastone2F-48'):
+        board_type = 'Seastone2F-48'
+    elif not data.find('Seastone2F-32'):
+        board_type = 'Seastone2F-32'
     elif not data.find('Phalanx'):
         board_type = 'Phalanx'
 

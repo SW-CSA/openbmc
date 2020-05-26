@@ -33,14 +33,11 @@ echo "Setup fan speed... "
 cp /etc/pid_config.ini /mnt/data/
 cp /etc/pid_config_v2.ini /mnt/data/
 brd_type=$(board_type)
-if [ "$brd_type" = "Fishbone48" ]; then
+if [ "$brd_type" = "Seastone2F-48" ]; then
     echo "Run FSC daemon fand_v2"
     /usr/local/bin/fand_v2
-elif [ "$brd_type" = "Fishbone32" ]; then
+elif [ "$brd_type" = "Seastone2F-32" ]; then
     echo "Run FSC daemon fand32_v2"
     /usr/local/bin/fand32_v2
-else
-    echo "Run default FSC daemon fand_v2"
-    /usr/local/bin/fand_v2
 fi
 echo "done."

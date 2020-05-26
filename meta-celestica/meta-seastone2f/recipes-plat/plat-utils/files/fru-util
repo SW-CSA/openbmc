@@ -54,19 +54,7 @@ FBEEPROM_I2C_BUS=39
 FBEEPROM_I2C_ADDR=56
 
 #FAN Module
-if [ "$board_type" = "Phalanx" ]; then
-FAN_EEPROM_MAX=5
-FAN1_EEPROM_I2C_BUS=36
-FAN1_EEPROM_I2C_ADDR=50
-FAN2_EEPROM_I2C_BUS=35
-FAN2_EEPROM_I2C_ADDR=50
-FAN3_EEPROM_I2C_BUS=34
-FAN3_EEPROM_I2C_ADDR=50
-FAN4_EEPROM_I2C_BUS=33
-FAN4_EEPROM_I2C_ADDR=50
-FAN5_EEPROM_I2C_BUS=32
-FAN5_EEPROM_I2C_ADDR=50
-else
+
 #For Fishbone
 FAN_EEPROM_MAX=4
 FAN1_EEPROM_I2C_BUS=36
@@ -77,26 +65,13 @@ FAN3_EEPROM_I2C_BUS=32
 FAN3_EEPROM_I2C_ADDR=50
 FAN4_EEPROM_I2C_BUS=34
 FAN4_EEPROM_I2C_ADDR=50
-fi
 
-#For Phalanx
-if [ "$board_type" = "Phalanx" ]; then
-LC_EEPROM_MAX=2
-LC1_EEPROM_I2C_BUS=9
-LC1_EEPROM_I2C_ADDR=52
-LC2_EEPROM_I2C_BUS=10
-LC2_EEPROM_I2C_ADDR=52
-fi
 
-#For Phalanx PSU
-if [ "$board_type" = "Phalanx" ]; then
-PSU_EEPROM_MAX=4
-PSU_ADDR_I2C_BUS=( '27 0x58' '26 0x58' '25 0x58' '24 0x58' )
-else
+
 #For Fishbone PSU
 PSU_EEPROM_MAX=2
 PSU_ADDR_I2C_BUS=( '25 0x59' '24 0x58' )
-fi
+
 
 ############################################
 read_info() {
@@ -104,18 +79,12 @@ read_info() {
 }
 
 psu_present() {
-	if [ "$board_type" = "Phalanx" ]; then
-		if [ $1 -le $PSU_EEPROM_MAX ]; then
-			((real_psu = $PSU_EEPROM_MAX - $1 + 1))
-			((val=$(read_info 0 0d psu_${real_psu}_present)))
-		fi
+	if [ $1 -ne 1  ]; then
+		((val=$(read_info 0 0d psu_l_present)))
 	else
-		if [ $1 -ne 1  ]; then
-			((val=$(read_info 0 0d psu_l_present)))
-		else
-			((val=$(read_info 0 0d psu_r_present)))
-		fi
+		((val=$(read_info 0 0d psu_r_present)))
 	fi
+	
 	if [ $val -eq 0 ]; then
 		return 1
 	else
@@ -140,17 +109,10 @@ psu_power_type() {
 }
 
 psu_power() {
-	if [ "$board_type" = "Phalanx" ]; then
-		if [ $1 -le $PSU_EEPROM_MAX ]; then
-			((real_psu = $PSU_EEPROM_MAX - $1 + 1))
-			((val=$(read_info 0 0d psu_${real_psu}_status)))
-		fi
+	if [ $1 -ne 1  ]; then
+		((val=$(read_info 0 0d psu_l_status)))
 	else
-		if [ $1 -ne 1  ]; then
-			((val=$(read_info 0 0d psu_l_status)))
-		else
-			((val=$(read_info 0 0d psu_r_status)))
-		fi
+		((val=$(read_info 0 0d psu_r_status)))
 	fi
 	if [ $val -eq 0 ]; then
 		return 1
@@ -160,17 +122,11 @@ psu_power() {
 }
 
 psu_acok() {
-	if [ "$board_type" = "Phalanx" ]; then
-		if [ $1 -le $PSU_EEPROM_MAX ]; then
-			((real_psu = $PSU_EEPROM_MAX - $1 + 1))
-			((val=$(read_info 0 0d psu_${real_psu}_ac_status)))
-		fi
+
+	if [ $1 -ne 1  ]; then
+		((val=$(read_info 0 0d psu_l_ac_status)))
 	else
-		if [ $1 -ne 1  ]; then
-			((val=$(read_info 0 0d psu_l_ac_status)))
-		else
-			((val=$(read_info 0 0d psu_r_ac_status)))
-		fi
+		((val=$(read_info 0 0d psu_r_ac_status)))
 	fi
 	if [ $val -eq 0 ]; then
 		return 1
@@ -185,23 +141,6 @@ psu_eeprom_path()
 }
 
 psu_info() {
-	if [ "$board_type" = "Phalanx" ]; then
-		if [ $1 -le $PSU_EEPROM_MAX ]; then
-			echo "PSU${1} FRU:"
-			$(psu_present $1)
-			if [ $? -eq 0 ]; then
-				echo "Present: Absent"
-				return 1
-			fi
-			if [ $(eeprom_data -d psu$1 -c /etc/eeprom-data/eeprom_phalanx.xml | grep 'DPS-1100' > /dev/null; echo $?) == 0 ]; then
-				eeprom_data -d psu$1 -c /etc/eeprom-data/eeprom_phalanx.xml 2>/dev/null
-			else
-				fruid-util psu$1 2>/dev/null
-			fi
-		else
-			echo "Invalid PSU number"
-		fi
-	else
 		if [ "$1" == "1" ]; then
 			echo "PSU1 FRU:"
 			$(psu_present 1)
@@ -229,17 +168,13 @@ psu_info() {
 		else
 			echo "Invalid PSU number"
 		fi
-	fi
 }
 
 psu_usage() {
 	echo "option:"
 	echo "-a    show all psu FRU"
-	if [ "$board_type" = "Phalanx" ]; then
-		echo "-p <1/2/3/4>    show specific psu FRU"
-	else
-		echo "-p <1/2>    show specific psu FRU"
-	fi
+	echo "-p <1/2>    show specific psu FRU"
+
 }
 
 fan_usage() {
@@ -320,25 +255,8 @@ lc_usage() {
 }
 
 lc_fru() {
-	if [ "$board_type" != "Phalanx" ]; then
-		echo "Warning: Board $board_type does not support the function!"
-		exit 0
-	fi
-	if [ $# -lt 1 ] || [ $1 -le 0 ] || [ $1 -gt ${LC_EEPROM_MAX} ]; then
-		lc_usage
-		return 1
-	fi
-	i=$1
-	echo "LC${i} FRU:"
-	fruid-util lc${i}
-	# i2c_bus=$((LC${i}_EEPROM_I2C_BUS))
-	# i2c_addr=$((LC${i}_EEPROM_I2C_ADDR))
-	# if [ -L ${EEPROM_LINK_FILE} ]; then
-	# 	rm -rf ${EEPROM_LINK_FILE}
-	# fi
-	# ln -s /sys/bus/i2c/devices/i2c-${i2c_bus}/${i2c_bus}-00${i2c_addr}/eeprom  ${EEPROM_LINK_FILE}
-	# shift
-	# syseeprom $@
+	echo "Warning: Board $board_type does not support the function!"
+	exit 0
 }
 
 show_psu_status() {

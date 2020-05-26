@@ -20,16 +20,7 @@
 PATH=/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/bin
 . /usr/local/bin/openbmc-utils.sh
 
-board_type=$(board_type)
 echo -n "Run platform configure: "
-if [ "$board_type" = "Fishbone48" ]; then
-    echo "setup_sensors_fishbone.sh"
-    /etc/init.d/setup_sensors_fishbone.sh
-elif [ "$board_type" = "Fishbone32" ]; then
-    echo "setup_sensors_fishbone.sh"
-    /etc/init.d/setup_sensors_fishbone.sh
-else
-    echo "setup_sensors_phalanx.sh"
-    /etc/init.d/setup_sensors_phalanx.sh
-fi
+/etc/init.d/setup_sensors_fishbone.sh
+
 

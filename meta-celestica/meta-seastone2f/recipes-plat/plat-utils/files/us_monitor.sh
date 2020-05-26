@@ -174,9 +174,9 @@ get_fan_pwm() {
 get_board_type() {
     brd_type=$(cat /sys/bus/i2c/devices/0-000d/sw_brd_type | head -n 1)
     if [ $brd_type == 0x1 ]; then
-        echo "fishbone48"
+        echo "Seastone2F-48"
     elif [ $brd_type == 0x0 ]; then
-        echo "fishbone32"
+        echo "Seastone2F-32"
     else
         echo ""
     fi
@@ -199,7 +199,7 @@ inlet_sensor_revise() {
     direction=$(get_fan_dir)
     if [ "$direction" = "F2B" ]; then
         board=$(get_board_type)
-        if [ "$board" = "fishbone48" ]; then
+        if [ "$board" = "Seastone2F-48" ]; then
             if [ $pwm -le 45 ]; then
                 temp=7
             elif [ $pwm -ge 70 ]; then
@@ -213,7 +213,7 @@ inlet_sensor_revise() {
                 cmd="sed -i '/compute temp1/c compute temp1 @-($temp), @/($temp)' /etc/sensors.d/as58xx-cl.conf"
                 eval $cmd
             fi
-        elif [ "$board" = "fishbone32" ]; then
+        elif [ "$board" = "Seastone2F-32" ]; then
             if [ $pwm -le 50 ]; then
                 temp=6
             elif [ $pwm -ge 81 ]; then
@@ -469,7 +469,7 @@ cpu_error_autodump() {
     fi
 }
 
-if [ "$board_type" = "Fishbone48" -o "$board_type" = "Fishbone32" ]; then
+if [ "$board_type" = "Seastone2F-48" -o "$board_type" = "Seastone2F-32" ]; then
     psu_status_init
 else
     phalanx_psu_status_init
@@ -493,7 +493,7 @@ echo 60000 >/sys/bus/i2c/devices/i2c-7/7-004d/hwmon/hwmon3/temp1_max_hyst
 
 
 while true; do
-    if [ "$board_type" = "Fishbone48" -o "$board_type" = "Fishbone32" ]; then
+    if [ "$board_type" = "Seastone2F-48" -o "$board_type" = "Seastone2F-32" ]; then
 	    for((i = 0; i < $PSU_NUM; i++))
 	    do
 		    psu_status_check $i

@@ -156,12 +156,10 @@ board_type() {
 	if [ $val -eq '0' ]; then
 	    ((val=$(i2cget -f -y 0 0x0d 0x03 2> /dev/null | head -n 1)))
 	    if [ $val -eq '0' ]; then
-		    echo "Fishbone32"
+		    echo "Seastone2F-32"
         else
-		    echo "Fishbone48"
+		    echo "Seastone2F-48"
         fi
-    else
-        echo "Phalanx"
 	fi
 }
 
@@ -274,7 +272,7 @@ cpld_upgrade() {
 	fi
 	source /usr/local/bin/openbmc-utils.sh
 	boardtype=$(board_type)
-	if [ $boardtype = "Fishbone32" ] || [ $boardtype = "Fishbone48" ]; then
+	if [ $boardtype = "Seastone2F-32" ] || [ $boardtype = "Seastone2F-48" ]; then
 		if [ $1 != "loop1" ]; then
 			echo "cpld_upgrade [loop1] [image_path]"
 			return 1
@@ -283,39 +281,6 @@ cpld_upgrade() {
 			gpio_set L2 1
 			ispvm –f 1000 dll /usr/lib/libcpldupdate_dll_gpio.so $2 --tdo 212 --tdi 213 --tms 214 --tck 215
 			gpio_set L2 0
-		fi
-	elif [ $boardtype = "Phalanx" ]; then
-		if [ $1 = "loop1" ]; then
-			if [ -e $2 ]; then
-				gpio_set L2 1
-				gpio_set P0 0
-				ispvm –f 1000 dll /usr/lib/libcpldupdate_dll_gpio.so $2 --tdo 212 --tdi 213 --tms 214 --tck 215
-				gpio_set L2 0
-				gpio_set P0 0
-				gpio_set O0 0
-			fi
-		elif [ $1 = "loop2" ]; then
-			if [ -e $2 ]; then
-				gpio_set L2 1
-				gpio_set P0 1
-				gpio_set O0 0
-				ispvm –f 1000 dll /usr/lib/libcpldupdate_dll_gpio.so $2 --tdo 212 --tdi 213 --tms 214 --tck 215
-				gpio_set L2 0
-				gpio_set P0 0
-				gpio_set O0 0
-			fi
-		elif [ $1 = "loop3" ]; then
-			if [ -e $2 ]; then
-				gpio_set L2 1
-				gpio_set P0 1
-				gpio_set O0 1
-				ispvm –f 1000 dll /usr/lib/libcpldupdate_dll_gpio.so $2 --tdo 212 --tdi 213 --tms 214 --tck 215
-				gpio_set L2 0
-				gpio_set P0 0
-				gpio_set O0 0
-			fi
-		else
-			echo "cpld_upgrade [loop1/loop2/loop3] [image_path]"
 		fi
 	else 
 		echo "Board not support"
@@ -561,7 +526,7 @@ cpld_refresh() {
 	fi
     logger -p user.info "cpld_refresh para: $@"
 	boardtype=$(board_type)
-	if [ "$boardtype" = "Fishbone32" ] || [ "$boardtype" = "Fishbone48" ]; then
+	if [ "$boardtype" = "Seastone2F-32" ] || [ "$boardtype" = "Seastone2F-48" ]; then
         #power off CPU
         logger -p user.warning "cpld_refresh: power off CPU"
         /usr/local/bin/wedge_power.sh off
@@ -589,41 +554,6 @@ cpld_refresh() {
 		    gpio_set L2 0
             logger -p user.warning "cpld_refresh: done, result=$ret"
         fi
-        sleep 5
-        logger -p user.warning "cpld_refresh: power cycle CPU"
-        /usr/local/bin/wedge_power.sh cycle
-        logger -p user.warning "cpld_refresh: BMC rebooting"
-        reboot
-	elif [ $boardtype = "Phalanx" ]; then
-        #power off CPU
-        logger -p user.warning "cpld_refresh: power off CPU"
-        /usr/local/bin/wedge_power.sh off
-        sleep 1
-		if [ $# -ge 2 ]; then
-            logger -p user.warning "cpld_refresh: start $1 CPLD refreshing"
-			gpio_set L2 1
-			gpio_set P0 0
-			#ispvm -f 1000 dll /usr/lib/libcpldupdate_dll_gpio.so $2 --tdo 212 --tdi 213 --tms 214 --tck 215
-			ispvm dll /usr/lib/libcpldupdate_dll_gpio.so $2 --tdo 212 --tdi 213 --tms 214 --tck 215
-            ret=$?
-			gpio_set L2 0
-			gpio_set P0 0
-			gpio_set O0 0
-            logger -p user.warning "cpld_refresh: done, result=$ret"
-		fi
-        sleep 5
-		if [ $# -ge 4 ]; then
-            logger -p user.warning "cpld_refresh: start $3 CPLD refreshing"
-			gpio_set L2 1
-			gpio_set P0 0
-			#ispvm -f 1000 dll /usr/lib/libcpldupdate_dll_gpio.so $4 --tdo 212 --tdi 213 --tms 214 --tck 215
-			ispvm dll /usr/lib/libcpldupdate_dll_gpio.so $4 --tdo 212 --tdi 213 --tms 214 --tck 215
-            ret=$?
-			gpio_set L2 0
-			gpio_set P0 0
-			gpio_set O0 0
-            logger -p user.warning "cpld_refresh: done, result=$ret"
-		fi
         sleep 5
         logger -p user.warning "cpld_refresh: power cycle CPU"
         /usr/local/bin/wedge_power.sh cycle

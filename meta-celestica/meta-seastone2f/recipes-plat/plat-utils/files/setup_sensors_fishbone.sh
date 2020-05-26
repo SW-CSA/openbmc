@@ -25,7 +25,6 @@ set_value() {
 	echo ${4} > /sys/bus/i2c/devices/i2c-${1}/${1}-00${2}/${3} 2> /dev/null
 }
 
-board_type=$(board_type)
 
 #func    bus addr node val
 #IR38060
@@ -160,7 +159,6 @@ fi
 
 # run sensors.config set command
 mv /etc/sensors.d/fishbone.conf /etc/sensors.d/as58xx-cl.conf
-rm /etc/sensors.d/phalanx.conf
 sensors -s
 sleep 3
 

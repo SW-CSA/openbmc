@@ -95,7 +95,7 @@ def get_fruid_fan():
     except bmc_command.TimeoutError as ex:
         data = ex.output
         err = ex.error
-    if not data.find('Fishbone'):
+    if not data.find('Seastone2F'):
         fan_num = 4
     elif not data.find('Phalanx'):
         fan_num = 5

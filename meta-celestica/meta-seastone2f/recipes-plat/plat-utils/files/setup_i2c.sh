@@ -20,16 +20,8 @@
 PATH=/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/bin
 . /usr/local/bin/openbmc-utils.sh
 
-board_type=$(board_type)
-if [ "$board_type" = "Fishbone48" ]; then
-    echo "Run setup_i2c_fishbone.sh "
-    /etc/init.d/setup_i2c_fishbone.sh
-elif [ "$board_type" = "Fishbone32" ]; then
-    echo "Run setup_i2c_fishbone.sh "
-    /etc/init.d/setup_i2c_fishbone.sh
-else
-    echo "Run setup_i2c_phalanx.sh "
-    /etc/init.d/setup_i2c_phalanx.sh
-fi
+echo "Run setup_i2c_fishbone.sh "
+/etc/init.d/setup_i2c_fishbone.sh
+
 echo "Done"
 
