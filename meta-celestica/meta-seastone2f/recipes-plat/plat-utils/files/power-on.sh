@@ -15,36 +15,14 @@
 
 PATH=/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/bin
 
-slave=0
 if /usr/local/bin/boot_info.sh |grep "Slave Flash" ; then
     echo "BMC boot from Slave flash"
     logger "BMC boot from Slave flash"
     sys_led yellow on #sysled light yellow
-    slave=1
 else
     echo "BMC boot from Master flash"
     logger "BMC boot from Master flash"
     sys_led green on #sysled light green
-    slave=0
-fi
-
-if [ $slave -eq 0 ]; then #master
-    if [ -f /var/log/boot_slave ]; then
-        ((val=$(cat /var/log/boot_slave)))
-        if [ $val -eq 1 ]; then
-            echo 0 > /var/log/boot_slave
-            echo "Previous BMC booting from slave, switch to BMC slave flash booting"
-            logger -p user.warning "Previous BMC booting from slave, switch to BMC slave flash booting"
-            boot_from slave
-        else
-            echo "BMC switch to slave flash booting fail"
-            logger -p user.warning "BMC switch to slave flash booting fail"
-        fi
-    fi
-else #slave
-    if [ -f /var/log/boot_slave ]; then
-        echo 1 > /var/log/boot_slave
-    fi
 fi
 
 if /usr/local/bin/wedge_power.sh status |grep "on"; then

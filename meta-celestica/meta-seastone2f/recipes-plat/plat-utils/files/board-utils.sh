@@ -485,18 +485,12 @@ bmc_reboot() {
             devmem_set_bit 0x1e78502c 7
             logger -p user.warning "Set BMC booting flash to master"
         fi
-        if [ -f /var/log/boot_slave ]; then
-            rm /var/log/boot_slave
-            sync
-        fi
         return 0
     elif [ "$1" == "slave" ]; then
         if [ $slave -eq 0 ]; then ##current is master booting
             devmem_set_bit 0x1e78502c 7
             logger -p user.warning "Set BMC booting flash to slave"
         fi
-        echo 1 > /var/log/boot_slave
-        sync
         return 0
     elif [ "$1" == "reboot" ]; then
         ((val=$(devmem 0x1e78502c)))
