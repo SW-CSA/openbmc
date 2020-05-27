@@ -158,10 +158,10 @@ if [ "$val" -gt "0" ] ; then
 fi
 
 # run sensors.config set command
-mv /etc/sensors.d/fishbone.conf /etc/sensors.d/as58xx-cl.conf
+mv /etc/sensors.d/seastone2f.conf /etc/sensors.d/as58xx-cl.conf
 sensors -s
 sleep 3
 
 #run power monitor
 echo "Start Power monitor"
-/usr/local/bin/power_monitor_fishbone.py &
+/usr/local/bin/power_monitor_seastone2f.py &

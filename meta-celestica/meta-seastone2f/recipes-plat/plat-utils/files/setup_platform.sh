@@ -20,7 +20,7 @@
 PATH=/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/bin
 . /usr/local/bin/openbmc-utils.sh
 
-echo -n "Run platform configure: "
-/etc/init.d/setup_sensors_fishbone.sh
+echo "Run platform configure:"
+/etc/init.d/setup_sensors_seastone2f.sh
 
 

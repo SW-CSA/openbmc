@@ -25,8 +25,7 @@ PR = "r0"
 PV = "0.1"
 
 SRC_URI = "file://Makefile \
-           file://fancpld_fishbone.c \
-           file://fancpld_phalanx.c \
+           file://fancpld_seastone2f.c \
            file://syscpld.c \
            file://COPYING \
           "

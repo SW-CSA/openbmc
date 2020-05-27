@@ -15,7 +15,7 @@
 # 51 Franklin Street, Fifth Floor,
 # Boston, MA 02110-1301 USA
 
-obj-m := fancpld_fishbone.o syscpld.o
+obj-m := fancpld_seastone2f.o syscpld.o
 
 ccflags-y += -I$(KERNEL_EXTRA_HEADER_PATH)
 

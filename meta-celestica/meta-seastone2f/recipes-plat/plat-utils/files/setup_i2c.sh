@@ -20,8 +20,8 @@
 PATH=/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/bin
 . /usr/local/bin/openbmc-utils.sh
 
-echo "Run setup_i2c_fishbone.sh "
-/etc/init.d/setup_i2c_fishbone.sh
+echo "Run setup_i2c_seastone2f.sh "
+/etc/init.d/setup_i2c_seastone2f.sh
 
 echo "Done"
 

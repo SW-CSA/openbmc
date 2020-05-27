@@ -25,7 +25,7 @@ echo "The board name is $board_type"
 echo -n "Insert kernel modules "
 modprobe syscpld
 echo 1 > /sys/devices/virtual/mdio_bus/ftgmac100_mii/led_ctrl
-modprobe fancpld_fishbone
+modprobe fancpld_seastone2f
 modprobe i2c-mux-pca954x ignore_probe=1
 modprobe cpu_error
 echo "Done"

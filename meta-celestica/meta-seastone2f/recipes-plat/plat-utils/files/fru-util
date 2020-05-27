@@ -37,7 +37,7 @@ command=(
 FAN_EEPROM_MAX=4
 PSU_EEPROM_MAX=2
 PSU_ADDR_I2C_BUS=( '25 0x59' '24 0x58' )
-PSU_XML="/etc/eeprom-data/eeprom_fishbone.xml"
+PSU_XML="/etc/eeprom-data/eeprom_seastone2f.xml"
 PSU_USAGE="-p <1/2>    show specific psu FRU"
 
 
