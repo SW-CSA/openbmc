@@ -244,11 +244,24 @@ def bmc_action(data):
     if file_name == '':
         return {"result": "Error: file name error"}
 
-    if flash == 'master':
-        cmd = 'flashcp /tmp/' + file_name + ' /dev/mtd5'
+    (data_, _) = Popen('boot_info.sh', shell=True, stdout=PIPE).communicate()
+    data_ = data_.decode()
+    if data_.find('Slave') != -1 :
+        current = 'slave'
     else:
-        cmd = 'flashcp /tmp/' + file_name + ' /dev/mtd11'
+        current = 'master'
 
+    if flash == 'master':
+        if current == 'master':
+            device = '/dev/mtd5'
+        else:
+            device = '/dev/mtd11'
+    else:
+        if current == 'master':
+            device = '/dev/mtd11'
+        else:
+            device = '/dev/mtd5'
+    cmd = 'flashcp /tmp/{} {}'.format(file_name,device)
     proc = subprocess.Popen([cmd], shell=True,
                         stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     try:

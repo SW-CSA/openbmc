@@ -470,48 +470,6 @@ set_hwmon_threshold() {
     fi
 }
 
-bmc_reboot() {
-    slave=0
-    if [ $# -lt 1 ] ; then
-        return 1
-    fi
-    if /usr/local/bin/boot_info.sh |grep "Slave Flash" ; then
-        slave=1
-    else
-        slave=0
-    fi
-    if [ "$1" == "master" ]; then
-        if [ $slave -eq 1 ]; then #current is slave booting
-            devmem_set_bit 0x1e78502c 7
-            logger -p user.warning "Set BMC booting flash to master"
-        fi
-        return 0
-    elif [ "$1" == "slave" ]; then
-        if [ $slave -eq 0 ]; then ##current is master booting
-            devmem_set_bit 0x1e78502c 7
-            logger -p user.warning "Set BMC booting flash to slave"
-        fi
-        return 0
-    elif [ "$1" == "reboot" ]; then
-        ((val=$(devmem 0x1e78502c)))
-        ((ret=$val&0x80))
-        if [ $ret -gt 0 ]; then
-            if [ $slave -eq 1 ]; then #current is slave, switch to master
-                logger -p user.warning "BMC will be booting from master flash"
-                boot_from master
-            else
-                logger -p user.warning "BMC will be booting from slave flash"
-                boot_from slave
-            fi
-        else
-            logger -p user.warning "BMC will be booting from current flash"
-            reboot #not set boot flash, just reboot bmc
-        fi
-        return 0
-    fi
-    return 1
-}
-
 cpld_refresh() {
     ret=1
 	if [ $# -lt 1 ]; then
