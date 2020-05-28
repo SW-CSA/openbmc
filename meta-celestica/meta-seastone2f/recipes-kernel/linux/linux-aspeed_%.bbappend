@@ -18,5 +18,6 @@ KERNEL_MODULE_AUTOLOAD += " \
 FILESEXTRAPATHS_prepend := "${THISDIR}/files:"
 
 SRC_URI += "file://defconfig \
-			file://0001-Add-Celestica-Questone2-and-AS58XX-CL-projects.patch \
-           "
+            file://0001-Add-Celestica-Questone2-and-AS58XX-CL-projects.patch \
+            file://0001-change-I2C-mode-to-BUFF-mode.patch \
+            "
