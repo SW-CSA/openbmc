@@ -22,7 +22,7 @@ info=`blkid $DEV`
 if [ ! "$info" ]; then
     echo -n "Format EMMC disk ......"
     logger "Format EMMC disk ......"
-	mkfs.ext2 $DEV
+	mkfs.ext4 $DEV
 	echo " Done"
 	echo -n "Mouting EMMC ......"
 	if [ ! -d "$MOUNT_POINT" ]; then
@@ -35,7 +35,7 @@ else
 	if [ ! -d "$MOUNT_POINT" ]; then
 		mkdir $MOUNT_POINT
 	fi
-	e2fsck -a $DEV
+	fsck.ext4 -a $DEV
 	mount $DEV $MOUNT_POINT
     echo " Done"
 fi
