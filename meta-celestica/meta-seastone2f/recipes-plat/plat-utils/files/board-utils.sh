@@ -201,37 +201,55 @@ boot_from() {
 	devmem 0x1e785028 32 0x4755
 	devmem 0x1e78502c 32 $boot_source
 }
+entry_ME_recovery_mode() {
+    /usr/bin/ipmitool -b 1 -t 0x2c raw 0x2e 0xdf 0x57 0x01 0x00 0x01
+    sleep 2
+}
+exit_ME_recovery_mode() {
+    /usr/bin/ipmitool -b 1 -t 0x2c raw 6 2
+    sleep 2
+}
+get_first_flash_type() {
+    ori_str=$(flashrom -p linux_spi:dev=/dev/spidev1.0)
+    type=$(echo ${ori_str} | cut -d '"' -f 2)
+    echo $type
+}
 
 bios_upgrade() {
-        source /usr/local/bin/openbmc-utils.sh
-        gpio_set E4 1
+    source /usr/local/bin/openbmc-utils.sh
+    entry_ME_recovery_mode
+    gpio_set E4 1
+    if [ ! -c /dev/spidev1.0 ]; then
+        mknod /dev/spidev1.0 c 153 0
+    fi
+    modprobe spidev
 
-        if [ ! -c /dev/spidev1.0 ]; then
-                mknod /dev/spidev1.0 c 153 0
-        fi
-        modprobe spidev
-
-        if [ "$1" == "master" ]; then
-                echo 0x2 > $BIOS_CTRL
-                echo 0x1 > $BIOS_CHIPSELECTION
-        elif [ "$1" == "slave" ]; then
-                echo 0x2 > $BIOS_CTRL
-                echo 0x3 > $BIOS_CHIPSELECTION
-        else
-                echo "bios_upgrade [master/slave] [flash type] [operation:r/w/e] [file name]"
-        fi
-
-        if [ $# == 4 ]; then
-                flashrom -p linux_spi:dev=/dev/spidev1.0 -c $2 -$3 $4
-        elif [ $# == 3 ] && [ "$3" == "e" ]; then
-                flashrom -p linux_spi:dev=/dev/spidev1.0 -c $2 -E
-        elif [ $# == 2 ]; then
-                flashrom -p linux_spi:dev=/dev/spidev1.0 -c $2
-        fi
-
-        gpio_set E4 0
-        echo 0x1 > $BIOS_CTRL
+    if [ "$1" == "master" ]; then
+        echo 0x2 > $BIOS_CTRL
         echo 0x1 > $BIOS_CHIPSELECTION
+    elif [ "$1" == "slave" ]; then
+        echo 0x2 > $BIOS_CTRL
+        echo 0x3 > $BIOS_CHIPSELECTION
+    else
+        echo "bios_upgrade [master/slave] [operation:-r/-w/-e] [file name]"
+    fi
+    flashtype=$(get_first_flash_type)
+    if [ $flashtype ];then
+        if [ $# == 3 ]; then
+            flashrom -p linux_spi:dev=/dev/spidev1.0 -c $flashtype -$2 $3
+        elif [ $# == 2 ] && [ "$2" == "-e" ]; then
+            flashrom -p linux_spi:dev=/dev/spidev1.0 -c $flashtype -E
+        elif [ $# == 3 ] && [ "$2" == "-r" -o "$2" == "-w" ]; then
+            flashrom -p linux_spi:dev=/dev/spidev1.0 -c $flashtype $2 $3
+        fi
+    else
+        echo "select flash chip failed"
+    fi
+    gpio_set E4 0
+    echo 0x1 > $BIOS_CTRL
+    echo 0x1 > $BIOS_CHIPSELECTION
+    sleep 2
+    exit_ME_recovery_mode
 }
 
 come_reset() {
