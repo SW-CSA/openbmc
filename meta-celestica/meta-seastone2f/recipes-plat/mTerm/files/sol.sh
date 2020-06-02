@@ -37,7 +37,7 @@ start_sol_session() {
   echo "-----------------------"
   echo
 
-  /usr/bin/microcom -s 9600 $TTY
+  /usr/bin/microcom -s 115200 $TTY
 
   echo
   echo

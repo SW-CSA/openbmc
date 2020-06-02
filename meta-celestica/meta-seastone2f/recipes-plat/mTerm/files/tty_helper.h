@@ -22,7 +22,7 @@
 #include <stdio.h>
 #include <fcntl.h>
 
-#define BAUDRATE B9600
+#define BAUDRATE B115200
 
 typedef struct ttyRaw {
   int fd;
