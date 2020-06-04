@@ -202,11 +202,11 @@ boot_from() {
 	devmem 0x1e78502c 32 $boot_source
 }
 entry_ME_recovery_mode() {
-    /usr/bin/ipmitool -b 1 -t 0x2c raw 0x2e 0xdf 0x57 0x01 0x00 0x01
+    /usr/bin/ipmitool -b 1 -t 0x2c raw 0x2e 0xdf 0x57 0x01 0x00 0x01 >/dev/NULL
     sleep 2
 }
 exit_ME_recovery_mode() {
-    /usr/bin/ipmitool -b 1 -t 0x2c raw 6 2
+    /usr/bin/ipmitool -b 1 -t 0x2c raw 6 2 >/dev/NULL
     sleep 2
 }
 get_first_flash_type() {
@@ -216,8 +216,11 @@ get_first_flash_type() {
 }
 
 bios_upgrade() {
+    if [ $# -eq 0 ];then
+        echo "bios_upgrade [master/slave] [operation:-r/-w/-e] [file name]"
+        return 0
+    fi
     source /usr/local/bin/openbmc-utils.sh
-    entry_ME_recovery_mode
     gpio_set E4 1
     if [ ! -c /dev/spidev1.0 ]; then
         mknod /dev/spidev1.0 c 153 0
@@ -232,12 +235,13 @@ bios_upgrade() {
         echo 0x3 > $BIOS_CHIPSELECTION
     else
         echo "bios_upgrade [master/slave] [operation:-r/-w/-e] [file name]"
+        gpio_set E4 0
+        return 0
     fi
+    entry_ME_recovery_mode
     flashtype=$(get_first_flash_type)
     if [ $flashtype ];then
-        if [ $# == 3 ]; then
-            flashrom -p linux_spi:dev=/dev/spidev1.0 -c $flashtype -$2 $3
-        elif [ $# == 2 ] && [ "$2" == "-e" ]; then
+        if [ $# == 2 ] && [ "$2" == "-e" ]; then
             flashrom -p linux_spi:dev=/dev/spidev1.0 -c $flashtype -E
         elif [ $# == 3 ] && [ "$2" == "-r" -o "$2" == "-w" ]; then
             flashrom -p linux_spi:dev=/dev/spidev1.0 -c $flashtype $2 $3
