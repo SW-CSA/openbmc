@@ -226,6 +226,12 @@ bios_upgrade() {
         mknod /dev/spidev1.0 c 153 0
     fi
     modprobe spidev
+    ((boot_source=$(cat $BIOS_BOOT_CHIP | head -n 1)))
+    if [ $boot_source -eq 0 ]; then
+        bs="0x1"        #master
+    else
+        bs="0x3"        #slave
+    fi
 
     if [ "$1" == "master" ]; then
         echo 0x2 > $BIOS_CTRL
@@ -250,8 +256,8 @@ bios_upgrade() {
         echo "select flash chip failed"
     fi
     gpio_set E4 0
-    echo 0x1 > $BIOS_CTRL
-    echo 0x1 > $BIOS_CHIPSELECTION
+    #switch to previous boot source
+    echo $bs > $BIOS_CHIPSELECTION
     sleep 2
     exit_ME_recovery_mode
 }
