@@ -1,0 +1,34 @@
+From a65dc2bd691ca243fd1973884dff14e9b4971e51 Mon Sep 17 00:00:00 2001
+From: VictorCLS <vwang@celestica.com>
+Date: Tue, 2 Jun 2020 16:05:18 +0800
+Subject: [PATCH] change baud rate to 115200
+
+---
+ include/configs/cel_as58xx-cl.h | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/include/configs/cel_as58xx-cl.h b/include/configs/cel_as58xx-cl.h
+index 3f21d67..97a97df 100644
+--- a/include/configs/cel_as58xx-cl.h
++++ b/include/configs/cel_as58xx-cl.h
+@@ -10,7 +10,7 @@
+ 
+ #define CONFIG_SYS_LONGHELP
+ 
+-#define CONFIG_BOOTARGS   "debug console=ttyS0,9600n8 root=/dev/ram rw"
++#define CONFIG_BOOTARGS   "debug console=ttyS0,115200n8 root=/dev/ram rw"
+ #define CONFIG_BOOTFILE   "flash-cel_as58xx-cl"
+ 
+ /*
+@@ -19,7 +19,7 @@
+ #define CONFIG_SYS_NS16550_COM1 AST_UART0_BASE
+ #define CONFIG_CONS_INDEX       1
+ #define CONFIG_ASPEED_COM       AST_UART0_BASE
+-#define CONFIG_BAUDRATE         9600
++#define CONFIG_BAUDRATE         115200
+ 
+ /*
+  * UART configurtion
+-- 
+2.7.4
+

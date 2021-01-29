@@ -1,0 +1,2 @@
+Common targets are:
+    r3187-cl-image

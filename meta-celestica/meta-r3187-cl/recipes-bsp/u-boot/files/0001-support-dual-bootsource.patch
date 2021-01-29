@@ -1,0 +1,59 @@
+From a478c6753f85b0f519c5a7a64cb8ca733248f8b0 Mon Sep 17 00:00:00 2001
+From: VictorCLS <vwang@celestica.com>
+Date: Wed, 1 Apr 2020 19:01:48 +0800
+Subject: [PATCH] support dual bootsource
+
+---
+ board/aspeed/ast-g5/ast-g5.c | 34 +++++++++++++++++++++++++---------
+ 1 file changed, 25 insertions(+), 9 deletions(-)
+
+diff --git a/board/aspeed/ast-g5/ast-g5.c b/board/aspeed/ast-g5/ast-g5.c
+index 627a4d4..e19db79 100644
+--- a/board/aspeed/ast-g5/ast-g5.c
++++ b/board/aspeed/ast-g5/ast-g5.c
+@@ -24,17 +24,33 @@ DECLARE_GLOBAL_DATA_PTR;
+ void watchdog_init(void)
+ {
+ #ifdef CONFIG_ASPEED_ENABLE_WATCHDOG
+-  u32 reload = AST_WDT_CLK * CONFIG_ASPEED_WATCHDOG_TIMEOUT;
+-  u32 reset_mask = 0x3; /* SoC | Clear after | Enable */
+-  /* Some boards may request the reset to trigger the EXT reset GPIO.
+-   * On Linux this is defined as WDT_CTRL_B_EXT.
+-   */
++    #define AST_WDT1_BASE 0x1e785000
++    #define AST_WDT2_BASE 0x1e785020
++    u32 reload = AST_WDT_CLK * CONFIG_ASPEED_WATCHDOG_TIMEOUT;
++    u32 reset_mask = 0x3; /* SoC | Clear after | Enable */
++    /* Some boards may request the reset to trigger the EXT reset GPIO.
++     * On Linux this is defined as WDT_CTRL_B_EXT.
++     */
++#ifdef CONFIG_ASPEED_ENABLE_DUAL_BOOT_WATCHDOG
++    /* dual boot watchdog is enabled */
++    /* set the reload value */
++    reload = AST_WDT_CLK * CONFIG_ASPEED_WATCHDOG_DUAL_BOOT_TIMEOUT;
++    /* set the reload value */
++    __raw_writel(reload, AST_WDT2_BASE + 0x04);
++    /* magic word to reload */
++    __raw_writel(0x4755, AST_WDT2_BASE + 0x08);
++    /* init the WDT2 clock source to 1MHz.
++       set WDT2 reset type to SOC reset.
++       enable 2nd flash boot whenever WDT2 reset.*/
++    __raw_writel(0x93, AST_WDT2_BASE + 0x0c);
++    printf("Dual boot watchdog: %us\n", CONFIG_ASPEED_WATCHDOG_DUAL_BOOT_TIMEOUT);
++#endif
+ #ifdef CONFIG_ASPEED_WATCHDOG_TRIGGER_GPIO
+-  __raw_writel(AST_SCU_BASE + 0xA8, __raw_readl(AST_SCU_BASE + 0xA8) | 0x4);
+-  reset_mask |= 0x08; /* Ext */
++    __raw_writel(AST_SCU_BASE + 0xA8, __raw_readl(AST_SCU_BASE + 0xA8) | 0x4);
++    reset_mask |= 0x08; /* Ext */
+ #endif
+-  ast_wdt_reset(reload, reset_mask);
+-  printf("Watchdog: %us\n", CONFIG_ASPEED_WATCHDOG_TIMEOUT);
++    ast_wdt_reset(reload, reset_mask);
++    printf("Watchdog: %us\n", CONFIG_ASPEED_WATCHDOG_TIMEOUT);
+ #endif
+ }
+ 
+-- 
+2.7.4
+
