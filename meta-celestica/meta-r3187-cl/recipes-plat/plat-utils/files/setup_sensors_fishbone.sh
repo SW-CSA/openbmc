@@ -160,7 +160,7 @@ fi
 
 # run sensors.config set command
 mv /etc/sensors.d/fishbone.conf /etc/sensors.d/as58xx-cl.conf
-rm /etc/sensors.d/Ivystone.conf
+rm /etc/sensors.d/ivystone.conf
 sensors -s
 sleep 3
 
